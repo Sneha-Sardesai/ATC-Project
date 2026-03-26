@@ -1,50 +1,38 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
+import java.sql.*;
 
 public class CreateDB {
- public static void main(String[] args) {
+    public static void main(String[] args) {
 
         String url = "jdbc:mysql://localhost:3306/ATC_DB";
         String user = "root";
-        String password = "root";  // your mysql password
+        String password = "Yunijoseph@05";   // your MySQL password
 
         try {
-
-            // Load Driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
             // Create Connection
             Connection con = DriverManager.getConnection(url, user, password);
-
             System.out.println("Connected to MySQL Database!");
 
-            // Create Statement
-            Statement stmt = con.createStatement();
+            // Call stored procedure
+            CallableStatement cs = con.prepareCall("{CALL GetEmergencyFlights()}");
 
-            // Execute Query
-            ResultSet rs = stmt.executeQuery("SELECT * FROM aircraft");
+            ResultSet rs = cs.executeQuery();
 
             // Display Data
+            System.out.println("Emergency Flights:");
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String model = rs.getString("model");
-                int capacity = rs.getInt("capacity");
-                String type = rs.getString("type");
+                int id = rs.getInt("Flight_ID");
+                String type = rs.getString("Emergency_Type");
+                int priority = rs.getInt("Priority_Level");
 
-                System.out.println(id + " " + model + " " + capacity + " " + type);
+                System.out.println(id + " | " + type + " | Priority: " + priority);
             }
 
-            // Close Connection
+            // Close connection
             con.close();
 
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
-    
 }
-
 
