@@ -1,38 +1,49 @@
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 
 public class CreateDB {
-    public static void main(String[] args) {
+ public static void main(String[] args) {
 
         String url = "jdbc:mysql://localhost:3306/ATC_DB";
         String user = "root";
-        String password = "Yunijoseph@05";   // your MySQL password
+        String password = "conspire";  // your mysql password
 
         try {
+
+            // Load Driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
             // Create Connection
             Connection con = DriverManager.getConnection(url, user, password);
+
             System.out.println("Connected to MySQL Database!");
 
-            // Call stored procedure
-            CallableStatement cs = con.prepareCall("{CALL GetEmergencyFlights()}");
+            // Create Statement
+            Statement stmt = con.createStatement();
 
-            ResultSet rs = cs.executeQuery();
+            // Execute Query
+            ResultSet rs = stmt.executeQuery("SELECT * FROM aircraft");
 
             // Display Data
-            System.out.println("Emergency Flights:");
             while (rs.next()) {
-                int id = rs.getInt("Flight_ID");
-                String type = rs.getString("Emergency_Type");
-                int priority = rs.getInt("Priority_Level");
+                int id = rs.getInt("Aircraft_ID");
+                String model = rs.getString("model");
+                int capacity = rs.getInt("capacity");
+                String type = rs.getString("type");
 
-                System.out.println(id + " | " + type + " | Priority: " + priority);
+                System.out.println(id + " " + model + " " + capacity + " " + type);
             }
 
-            // Close connection
+            // Close Connection
             con.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e);
         }
     }
+    
 }
 
