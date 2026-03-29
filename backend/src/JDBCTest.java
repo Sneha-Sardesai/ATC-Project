@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 
-public class CreateDB {
+public class JDBCTest {
  public static void main(String[] args) {
 
         String url = "jdbc:mysql://localhost:3306/ATC_DB";

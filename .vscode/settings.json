@@ -1,7 +1,8 @@
 {
-    "java.project.referencedLibraries": [
-        "lib/**/*.jar",
-        "c:\\Users\\Amit Kumar\\Downloads\\mysql-connector-j-9.6.0\\mysql-connector-j-9.6.0\\mysql-connector-j-9.6.0.jar",
-        "c:\\Users\\EJ312WS\\Downloads\\mysql-connector-j-9.6.0 (1)\\mysql-connector-j-9.6.0\\mysql-connector-j-9.6.0.jar"
-    ]
+  "java.project.referencedLibraries": [
+    "backend\\lib\\mysql-connector-j-9.6.0.jar"
+  ],
+  "java.project.sourcePaths": [
+    "backend\\src"
+  ]
 }
