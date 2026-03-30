@@ -4,5 +4,21 @@
   ],
   "java.project.sourcePaths": [
     "backend\\src"
+  ],
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "ATC_DB",
+      "database": "ATC_DB",
+      "username": "root"
+    }
   ]
 }
