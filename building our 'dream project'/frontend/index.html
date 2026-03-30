@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATC Management System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* CENTER MENU */
+        .menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+        }
+
+        .menu h1 {
+            margin-bottom: 20px;
+        }
+
+        .menu button {
+            margin: 10px;
+            padding: 15px;
+            width: 260px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .menu button:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+        }
+
+        /* SCREEN BACKGROUND */
+        .screen {
+            display: none;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CARD */
+        .card {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button.action {
+            padding: 12px;
+            width: 95%;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button.action:hover {
+            background: #1d4ed8;
+        }
+
+        .back {
+            margin-top: 10px;
+            background: gray;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .landing { color: green; font-weight: bold; }
+        .approaching { color: orange; font-weight: bold; }
+
+    </style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="menu" id="menu">
+    <h1>✈️ ATC Management System</h1>
+    <button onclick="showEmergency()">🚨 Declare Emergency</button>
+    <button onclick="showFlights()">📊 View Flights</button>
+</div>
+
+<!-- EMERGENCY SCREEN -->
+<div class="screen" id="emergency">
+    <div class="card">
+        <h3>Declare Emergency</h3>
+        <input type="number" placeholder="Flight ID" id="fid">
+        <input type="text" placeholder="Emergency Type" id="etype">
+        <input type="number" placeholder="Priority (1 = High)" id="priority">
+        <button class="action" onclick="submitEmergency()">Submit</button>
+        <button class="action back" onclick="goBack()">⬅ Back</button>
+    </div>
+</div>
+
+<!-- FLIGHTS SCREEN -->
+<div class="screen" id="flights">
+    <div class="card">
+        <h3>Flight Status</h3>
+        <table>
+            <tr>
+                <th>Flight ID</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>101</td>
+                <td class="landing">Landing</td>
+            </tr>
+            <tr>
+                <td>102</td>
+                <td class="approaching">Approaching</td>
+            </tr>
+        </table>
+        <button class="action back" onclick="goBack()">⬅ Back</button>
+    </div>
+</div>
+
+<script>
+function showEmergency() {
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("emergency").style.display = "flex";
+}
+
+function showFlights() {
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("flights").style.display = "flex";
+}
+
+function goBack() {
+    document.getElementById("menu").style.display = "flex";
+    document.getElementById("emergency").style.display = "none";
+    document.getElementById("flights").style.display = "none";
+}
+
+function submitEmergency() {
+    let id = document.getElementById("fid").value;
+    let type = document.getElementById("etype").value;
+    let priority = document.getElementById("priority").value;
+
+    if(id && type && priority){
+        alert("✅ Emergency Submitted for Flight " + id);
+    } else {
+        alert("⚠️ Please fill all fields");
+    }
+}
+</script>
+
+</body>
+</html>

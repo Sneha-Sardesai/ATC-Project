@@ -1,0 +1,120 @@
+CREATE DATABASE ATC_DB;
+USE ATC_DB;
+show tables;
+
+-- AIRCRAFT
+
+CREATE TABLE AIRCRAFT (
+    Aircraft_ID INT PRIMARY KEY,
+    Model VARCHAR(50),
+    Capacity INT,
+    Type VARCHAR(30)
+);
+    
+-- RUNWAY
+
+CREATE TABLE RUNWAY (
+    Runway_ID INT PRIMARY KEY,
+    Runway_Code VARCHAR(10),
+    Status VARCHAR(20)
+);
+
+-- GATE
+
+CREATE TABLE GATE (
+    Gate_ID INT PRIMARY KEY,
+    Gate_Number VARCHAR(10),
+    Terminal VARCHAR(10),
+    Status VARCHAR(20)
+);
+
+-- CONTROLLER
+
+CREATE TABLE CONTROLLER (
+    Controller_ID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Role VARCHAR(30),
+    Status VARCHAR(20)
+);
+
+-- FLIGHT
+
+CREATE TABLE FLIGHT (
+    Flight_ID INT PRIMARY KEY,
+    Status VARCHAR(30),
+    Scheduled_Time DATETIME,
+    Actual_Time DATETIME,
+    Aircraft_ID INT,
+    Runway_ID INT,
+    Gate_ID INT,
+    FOREIGN KEY (Aircraft_ID) REFERENCES AIRCRAFT(Aircraft_ID),
+    FOREIGN KEY (Runway_ID) REFERENCES RUNWAY(Runway_ID),
+    FOREIGN KEY (Gate_ID) REFERENCES GATE(Gate_ID)
+);
+
+-- NORMAL FLIGHT
+
+CREATE TABLE NORMAL_FLIGHT (
+    Flight_ID INT PRIMARY KEY,
+    Airline VARCHAR(50),
+    FOREIGN KEY (Flight_ID) REFERENCES FLIGHT(Flight_ID)
+);
+
+-- EMERGENCY FLIGHT
+
+CREATE TABLE EMERGENCY_FLIGHT (
+    Flight_ID INT PRIMARY KEY,
+    Emergency_Type VARCHAR(50),
+    Priority_Level INT,
+    FOREIGN KEY (Flight_ID) REFERENCES FLIGHT(Flight_ID)
+);
+
+-- CONTROLLER ASSIGNMENT
+
+CREATE TABLE FLIGHT_CONTROLLER_ASSIGNMENT (
+    Assignment_ID INT PRIMARY KEY,
+    Flight_ID INT,
+    Controller_ID INT,
+    FOREIGN KEY (Flight_ID) REFERENCES FLIGHT(Flight_ID),
+    FOREIGN KEY (Controller_ID) REFERENCES CONTROLLER(Controller_ID)
+);
+
+-- STATUS LOG
+
+CREATE TABLE FLIGHT_STATUS_LOG (
+    Log_ID INT PRIMARY KEY,
+    Flight_ID INT,
+    Status VARCHAR(50),
+    Timestamp DATETIME,
+    FOREIGN KEY (Flight_ID) REFERENCES FLIGHT(Flight_ID)
+);
+
+-- ---------------------------------------------------------------------------------------------
+
+-- INSERTING VALUES
+
+INSERT INTO AIRCRAFT VALUES
+(1, 'Boeing 737', 180, 'Passenger');
+
+INSERT INTO RUNWAY VALUES
+(1, 'RW1', 'Available');
+
+INSERT INTO GATE VALUES
+(1, 'G1', 'T1', 'Available');
+
+INSERT INTO CONTROLLER VALUES
+(1, 'Amit', 'Senior', 'Available');
+
+INSERT INTO FLIGHT VALUES
+(101, 'Approaching', NOW(), NULL, 1, 1, 1);
+
+INSERT INTO EMERGENCY_FLIGHT VALUES
+(101, 'Medical', 1);
+
+INSERT INTO FLIGHT_CONTROLLER_ASSIGNMENT VALUES
+(1, 101, 1);
+SELECT f.Flight_ID, e.Emergency_Type, e.Priority_Level
+FROM FLIGHT f
+JOIN EMERGENCY_FLIGHT e ON f.Flight_ID = e.Flight_ID;
+SELECT * FROM FLIGHT;
+SELECT * FROM EMERGENCY_FLIGHT;
