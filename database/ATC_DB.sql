@@ -103,7 +103,7 @@ INSERT INTO GATE VALUES
 (1, 'G1', 'T1', 'Available');
 
 INSERT INTO CONTROLLER VALUES
-(1, 'Amit', 'Senior', 'Available');
+(1, 'Ria', 'Senior', 'Available');
 
 INSERT INTO FLIGHT VALUES
 (101, 'Approaching', NOW(), NULL, 1, 1, 1);

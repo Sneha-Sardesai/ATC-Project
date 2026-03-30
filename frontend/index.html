@@ -1,187 +1,1294 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>ATC Management System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Air Traffic Control System — Controller Dashboard for managing flight operations, emergencies, and runway/gate assignments.">
+<title>ATC — Controller Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-        }
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg-primary:   #08090e;
+  --bg-secondary: #0f1118;
+  --bg-card:      rgba(255,255,255,0.03);
+  --bg-card-hover:rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-blur:   blur(24px);
 
-        /* CENTER MENU */
-        .menu {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: white;
-        }
+  --text-primary:   #e8eaed;
+  --text-secondary: #8b8fa3;
+  --text-muted:     #555970;
 
-        .menu h1 {
-            margin-bottom: 20px;
-        }
+  --accent:        #6c63ff;
+  --accent-glow:   rgba(108,99,255,0.25);
+  --emergency:     #ff4d6a;
+  --emergency-glow:rgba(255,77,106,0.20);
+  --success:       #34d399;
+  --warning:       #f59e0b;
+  --info:          #38bdf8;
 
-        .menu button {
-            margin: 10px;
-            padding: 15px;
-            width: 260px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+  --radius-sm:  8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
 
-        .menu button:hover {
-            background: #1d4ed8;
-            transform: scale(1.05);
-        }
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-        /* SCREEN BACKGROUND */
-        .screen {
-            display: none;
-            height: 100vh;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  --transition: 0.25s cubic-bezier(.4,0,.2,1);
+}
 
-        /* CARD */
-        .card {
-            background: #f8fafc;
-            padding: 30px;
-            border-radius: 12px;
-            width: 350px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            text-align: center;
-        }
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-        button.action {
-            padding: 12px;
-            width: 95%;
-            margin-top: 10px;
-            border: none;
-            border-radius: 6px;
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-        }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
 
-        button.action:hover {
-            background: #1d4ed8;
-        }
+/* ============================================================
+   AMBIENT BG
+   ============================================================ */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(108,99,255,0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(255,77,106,0.08), transparent);
+}
 
-        .back {
-            margin-top: 10px;
-            background: gray;
-        }
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen { display: none; position: relative; z-index: 1; }
+.screen.active { display: flex; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+#loginScreen {
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 32px;
+}
 
-        th {
-            background: #2563eb;
-            color: white;
-        }
+.login-brand {
+  text-align: center;
+  animation: slideUp .7s ease both;
+}
+.login-brand .icon { font-size: 48px; margin-bottom: 8px; }
+.login-brand h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+.login-brand p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
 
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
+.login-card {
+  width: 380px;
+  padding: 36px 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: slideUp .7s .15s ease both;
+}
 
-        .landing { color: green; font-weight: bold; }
-        .approaching { color: orange; font-weight: bold; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.form-group input {
+  width: 100%;
+  padding: 13px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  transition: var(--transition);
+}
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.form-group input::placeholder { color: var(--text-muted); }
 
-    </style>
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--accent-glow);
+}
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+}
+.btn-outline:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+}
+.btn-danger {
+  background: rgba(255,77,106,0.15);
+  color: var(--emergency);
+  border: 1px solid rgba(255,77,106,0.2);
+}
+.btn-danger:hover { background: rgba(255,77,106,0.25); }
+.btn-success {
+  background: rgba(52,211,153,0.15);
+  color: var(--success);
+  border: 1px solid rgba(52,211,153,0.2);
+}
+.btn-success:hover { background: rgba(52,211,153,0.25); }
+.btn-info {
+  background: rgba(56,189,248,0.15);
+  color: var(--info);
+  border: 1px solid rgba(56,189,248,0.2);
+}
+.btn-info:hover { background: rgba(56,189,248,0.25); }
+
+.login-error {
+  display: none;
+  padding: 10px 14px;
+  background: rgba(255,77,106,0.1);
+  border: 1px solid rgba(255,77,106,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--emergency);
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: shake .4s ease;
+}
+
+.login-hint {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.login-hint span { color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; }
+
+/* ============================================================
+   DASHBOARD SCREEN
+   ============================================================ */
+#dashboardScreen { flex-direction: column; min-height: 100vh; }
+
+/* --- Top Nav --- */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 64px;
+  background: rgba(8,9,14,0.85);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topnav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topnav-left .logo {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.topnav-left .separator {
+  width: 1px; height: 24px;
+  background: rgba(255,255,255,0.08);
+}
+.topnav-left .page-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.topnav-right { display: flex; align-items: center; gap: 16px; }
+.controller-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+}
+.controller-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.controller-info .name { font-size: 13px; font-weight: 600; line-height: 1.2; }
+.controller-info .role { font-size: 11px; color: var(--text-muted); }
+
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.15);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse-dot 1.5s ease infinite;
+}
+
+/* --- Content Container --- */
+.dashboard-content {
+  flex: 1;
+  padding: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* --- Stats Row --- */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  padding: 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: var(--glass-blur);
+  transition: var(--transition);
+  animation: fadeIn .5s ease both;
+}
+.stat-card:nth-child(2) { animation-delay: .05s; }
+.stat-card:nth-child(3) { animation-delay: .1s; }
+.stat-card:nth-child(4) { animation-delay: .15s; }
+.stat-card:hover {
+  transform: translateY(-2px);
+  background: var(--bg-card-hover);
+}
+.stat-card .label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+.stat-card .value {
+  font-size: 32px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -1px;
+}
+.stat-card .sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.stat-card.emergency-stat { border-left: 3px solid var(--emergency); }
+.stat-card.emergency-stat .value { color: var(--emergency); }
+
+/* --- Flight Sections --- */
+.flight-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.flight-section {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+  animation: fadeIn .5s .2s ease both;
+}
+.flight-section:nth-child(2) { animation-delay: .3s; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.section-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-header .count-badge {
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.emergency-section .section-header {
+  background: rgba(255,77,106,0.04);
+}
+.emergency-section .count-badge {
+  background: rgba(255,77,106,0.15);
+  color: var(--emergency);
+}
+.normal-section .count-badge {
+  background: rgba(108,99,255,0.15);
+  color: var(--accent);
+}
+
+.section-header .sort-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.flight-list {
+  padding: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.flight-list:empty::after {
+  content: "No flights";
+  display: block;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* --- Flight Card --- */
+.flight-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 6px;
+}
+.flight-card:hover {
+  background: rgba(255,255,255,0.03);
+  border-color: var(--glass-border);
+}
+.flight-card.emergency-card:hover {
+  background: rgba(255,77,106,0.04);
+  border-color: rgba(255,77,106,0.12);
+}
+
+.flight-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.flight-card.emergency-card .flight-icon {
+  background: rgba(255,77,106,0.1);
+}
+.flight-card.normal-card .flight-icon {
+  background: rgba(108,99,255,0.1);
+}
+
+.flight-meta h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flight-meta .flight-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.flight-meta .tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.tag-emergency { background: rgba(255,77,106,0.15); color: var(--emergency); }
+.tag-status    { background: rgba(56,189,248,0.12); color: var(--info); }
+.tag-priority  { background: rgba(245,158,11,0.15); color: var(--warning); }
+.tag-airline   { background: rgba(108,99,255,0.12); color: var(--accent); }
+
+.flight-actions-peek {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.flight-actions-peek .arrow {
+  font-size: 16px;
+  transition: var(--transition);
+}
+.flight-card:hover .flight-actions-peek .arrow {
+  transform: translateX(3px);
+  color: var(--accent);
+}
+
+/* ============================================================
+   MODAL — Flight Details
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 500;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+
+.modal {
+  width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  animation: modalIn .3s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.modal-close:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+.modal-body { padding: 26px; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.detail-item {
+  padding: 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+}
+.detail-item .d-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.detail-item .d-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.modal-actions-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-top: 4px;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 20px;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.action-group {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+}
+.action-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.action-group select,
+.action-group input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: var(--transition);
+  margin-bottom: 10px;
+  appearance: none;
+}
+.action-group select:focus,
+.action-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.modal-footer {
+  padding: 18px 26px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 28px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideInRight .3s ease, fadeOutRight .3s 2.5s ease forwards;
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+.toast-success { background: rgba(52,211,153,0.15); color: var(--success); border-color: rgba(52,211,153,0.2); }
+.toast-error   { background: rgba(255,77,106,0.15); color: var(--emergency); border-color: rgba(255,77,106,0.2); }
+.toast-info    { background: rgba(56,189,248,0.15); color: var(--info); border-color: rgba(56,189,248,0.2); }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeOutRight {
+  to { opacity: 0; transform: translateX(40px); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .flight-sections { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .topnav { padding: 0 16px; }
+  .dashboard-content { padding: 16px; }
+  .login-card { width: 95vw; padding: 28px 20px; }
+  .modal { width: 95vw; }
+  .controller-badge .controller-info { display: none; }
+}
+</style>
 </head>
 
 <body>
 
-<!-- MENU -->
-<div class="menu" id="menu">
-    <h1>✈️ ATC Management System</h1>
-    <button onclick="showEmergency()">🚨 Declare Emergency</button>
-    <button onclick="showFlights()">📊 View Flights</button>
-</div>
+<div class="ambient"></div>
 
-<!-- EMERGENCY SCREEN -->
-<div class="screen" id="emergency">
-    <div class="card">
-        <h3>Declare Emergency</h3>
-        <input type="number" placeholder="Flight ID" id="fid">
-        <input type="text" placeholder="Emergency Type" id="etype">
-        <input type="number" placeholder="Priority (1 = High)" id="priority">
-        <button class="action" onclick="submitEmergency()">Submit</button>
-        <button class="action back" onclick="goBack()">⬅ Back</button>
+<!-- ================== TOAST CONTAINER ================== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ================== LOGIN SCREEN ================== -->
+<div id="loginScreen" class="screen active">
+
+  <div class="login-brand">
+    <div class="icon">✈️</div>
+    <h1>ATC System</h1>
+    <p>Air Traffic Control — Controller Dashboard</p>
+  </div>
+
+  <div class="login-card">
+    <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="controllerId">Controller ID</label>
+        <input type="number" id="controllerId" placeholder="Enter your Controller ID" required>
+      </div>
+      <div class="form-group">
+        <label for="controllerName">Name</label>
+        <input type="text" id="controllerName" placeholder="Enter your name" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+    </form>
+
+    <div class="login-hint">
+      Demo credentials: <span>ID: 1 &nbsp;|&nbsp; Name: Ria</span>
     </div>
+  </div>
 </div>
 
-<!-- FLIGHTS SCREEN -->
-<div class="screen" id="flights">
-    <div class="card">
-        <h3>Flight Status</h3>
-        <table>
-            <tr>
-                <th>Flight ID</th>
-                <th>Status</th>
-            </tr>
-            <tr>
-                <td>101</td>
-                <td class="landing">Landing</td>
-            </tr>
-            <tr>
-                <td>102</td>
-                <td class="approaching">Approaching</td>
-            </tr>
-        </table>
-        <button class="action back" onclick="goBack()">⬅ Back</button>
+<!-- ================== DASHBOARD SCREEN ================== -->
+<div id="dashboardScreen" class="screen">
+
+  <!-- Top Nav -->
+  <nav class="topnav">
+    <div class="topnav-left">
+      <span class="logo">✈️ ATC</span>
+      <div class="separator"></div>
+      <span class="page-title">Controller Dashboard</span>
     </div>
+    <div class="topnav-right">
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        Live
+      </div>
+      <div class="controller-badge" id="controllerBadge">
+        <div class="controller-avatar" id="controllerAvatar">A</div>
+        <div class="controller-info">
+          <div class="name" id="navControllerName">Ria</div>
+          <div class="role" id="navControllerRole">Senior Controller</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline" id="logoutBtn" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content">
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="label">Total Flights</div>
+        <div class="value" id="statTotal">0</div>
+        <div class="sub">Assigned to you</div>
+      </div>
+      <div class="stat-card emergency-stat">
+        <div class="label">Emergencies</div>
+        <div class="value" id="statEmergency">0</div>
+        <div class="sub">Requires attention</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Active Runways</div>
+        <div class="value" id="statRunways">0</div>
+        <div class="sub">Currently in use</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Available Gates</div>
+        <div class="value" id="statGates">0</div>
+        <div class="sub">Ready for assignment</div>
+      </div>
+    </div>
+
+    <!-- Flight Sections -->
+    <div class="flight-sections">
+
+      <!-- Emergency Flights -->
+      <div class="flight-section emergency-section">
+        <div class="section-header">
+          <h2>🚨 Emergency Flights <span class="count-badge" id="emergencyCount">0</span></h2>
+          <span class="sort-label">Sorted by priority</span>
+        </div>
+        <div class="flight-list" id="emergencyFlightList"></div>
+      </div>
+
+      <!-- Normal Flights -->
+      <div class="flight-section normal-section">
+        <div class="section-header">
+          <h2>🛫 Normal Flights <span class="count-badge" id="normalCount">0</span></h2>
+          <span class="sort-label">By scheduled time</span>
+        </div>
+        <div class="flight-list" id="normalFlightList"></div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
+<!-- ================== FLIGHT DETAIL MODAL ================== -->
+<div class="modal-overlay" id="flightModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>✈️ <span id="modalFlightTitle">Flight #101</span></h2>
+      <button class="modal-close" id="modalCloseBtn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Detail Grid -->
+      <div class="detail-grid" id="detailGrid"></div>
+
+      <!-- Actions -->
+      <div class="modal-actions-title">Controller Actions</div>
+
+      <div class="action-row">
+        <div class="action-group">
+          <label for="assignRunway">Assign Runway</label>
+          <select id="assignRunway"></select>
+          <button class="btn btn-sm btn-info" onclick="assignRunway()">Update Runway</button>
+        </div>
+        <div class="action-group">
+          <label for="assignGate">Assign Gate</label>
+          <select id="assignGate"></select>
+          <button class="btn btn-sm btn-info" onclick="assignGate()">Update Gate</button>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <div class="action-group">
+          <label for="updateStatus">Update Status</label>
+          <select id="updateStatus">
+            <option value="Scheduled">Scheduled</option>
+            <option value="Approaching">Approaching</option>
+            <option value="Landing">Landing</option>
+            <option value="Landed">Landed</option>
+            <option value="Taxiing">Taxiing</option>
+            <option value="At Gate">At Gate</option>
+            <option value="Departing">Departing</option>
+            <option value="Airborne">Airborne</option>
+          </select>
+          <button class="btn btn-sm btn-success" onclick="updateFlightStatus()">Update Status</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-sm btn-outline" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
 <script>
-function showEmergency() {
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("emergency").style.display = "flex";
+
+// ---- DATA (simulates the MySQL ATC_DB schema) ----
+
+const controllers = [
+  { Controller_ID: 1, Name: "Ria",    Role: "Senior",  Status: "Available" },
+  { Controller_ID: 2, Name: "Sneha",  Role: "Junior",  Status: "Available" },
+  { Controller_ID: 3, Name: "Rahul",  Role: "Trainee", Status: "On Break"  }
+];
+
+const aircraft = [
+  { Aircraft_ID: 1, Model: "Boeing 737",    Capacity: 180, Type: "Passenger" },
+  { Aircraft_ID: 2, Model: "Airbus A320",   Capacity: 160, Type: "Passenger" },
+  { Aircraft_ID: 3, Model: "Boeing 777",    Capacity: 350, Type: "Passenger" },
+  { Aircraft_ID: 4, Model: "Cessna 172",    Capacity: 4,   Type: "Private"   },
+  { Aircraft_ID: 5, Model: "Boeing 747F",   Capacity: 0,   Type: "Cargo"     },
+  { Aircraft_ID: 6, Model: "Airbus A380",   Capacity: 550, Type: "Passenger" }
+];
+
+let runways = [
+  { Runway_ID: 1, Runway_Code: "RW-09L", Status: "Available"  },
+  { Runway_ID: 2, Runway_Code: "RW-09R", Status: "Available"  },
+  { Runway_ID: 3, Runway_Code: "RW-27L", Status: "In Use"     },
+  { Runway_ID: 4, Runway_Code: "RW-27R", Status: "Maintenance"}
+];
+
+let gates = [
+  { Gate_ID: 1, Gate_Number: "G1",  Terminal: "T1", Status: "Available" },
+  { Gate_ID: 2, Gate_Number: "G2",  Terminal: "T1", Status: "Occupied"  },
+  { Gate_ID: 3, Gate_Number: "G3",  Terminal: "T2", Status: "Available" },
+  { Gate_ID: 4, Gate_Number: "G4",  Terminal: "T2", Status: "Available" },
+  { Gate_ID: 5, Gate_Number: "G5",  Terminal: "T3", Status: "Occupied"  },
+  { Gate_ID: 6, Gate_Number: "G6",  Terminal: "T3", Status: "Available" }
+];
+
+let flights = [
+  { Flight_ID: 101, Status: "Approaching", Scheduled_Time: "2026-03-30 22:30", Actual_Time: null, Aircraft_ID: 1, Runway_ID: 1, Gate_ID: 1 },
+  { Flight_ID: 102, Status: "Scheduled",   Scheduled_Time: "2026-03-30 23:00", Actual_Time: null, Aircraft_ID: 2, Runway_ID: null, Gate_ID: null },
+  { Flight_ID: 103, Status: "Landing",     Scheduled_Time: "2026-03-30 23:15", Actual_Time: null, Aircraft_ID: 3, Runway_ID: 3, Gate_ID: null },
+  { Flight_ID: 104, Status: "Approaching", Scheduled_Time: "2026-03-30 23:45", Actual_Time: null, Aircraft_ID: 4, Runway_ID: null, Gate_ID: null },
+  { Flight_ID: 105, Status: "Taxiing",     Scheduled_Time: "2026-03-31 00:00", Actual_Time: "2026-03-30 23:55", Aircraft_ID: 5, Runway_ID: 2, Gate_ID: 2 },
+  { Flight_ID: 106, Status: "Scheduled",   Scheduled_Time: "2026-03-31 01:30", Actual_Time: null, Aircraft_ID: 6, Runway_ID: null, Gate_ID: null },
+  { Flight_ID: 201, Status: "Approaching", Scheduled_Time: "2026-03-30 22:15", Actual_Time: null, Aircraft_ID: 3, Runway_ID: 1, Gate_ID: null },
+  { Flight_ID: 301, Status: "Landing",     Scheduled_Time: "2026-03-30 22:00", Actual_Time: null, Aircraft_ID: 1, Runway_ID: 3, Gate_ID: 5 }
+];
+
+let emergencyFlights = [
+  { Flight_ID: 101, Emergency_Type: "Medical",       Priority_Level: 1 },
+  { Flight_ID: 201, Emergency_Type: "Engine Failure", Priority_Level: 1 },
+  { Flight_ID: 301, Emergency_Type: "Fuel Low",       Priority_Level: 2 },
+  { Flight_ID: 104, Emergency_Type: "Hydraulic Fail", Priority_Level: 3 }
+];
+
+let normalFlights = [
+  { Flight_ID: 102, Airline: "IndiGo"       },
+  { Flight_ID: 103, Airline: "Air India"     },
+  { Flight_ID: 105, Airline: "SpiceJet"      },
+  { Flight_ID: 106, Airline: "Vistara"       }
+];
+
+// Assignments: which flights belong to which controller
+const assignments = [
+  { Assignment_ID: 1, Flight_ID: 101, Controller_ID: 1 },
+  { Assignment_ID: 2, Flight_ID: 102, Controller_ID: 1 },
+  { Assignment_ID: 3, Flight_ID: 103, Controller_ID: 1 },
+  { Assignment_ID: 4, Flight_ID: 104, Controller_ID: 1 },
+  { Assignment_ID: 5, Flight_ID: 105, Controller_ID: 1 },
+  { Assignment_ID: 6, Flight_ID: 106, Controller_ID: 1 },
+  { Assignment_ID: 7, Flight_ID: 201, Controller_ID: 1 },
+  { Assignment_ID: 8, Flight_ID: 301, Controller_ID: 1 }
+];
+
+let statusLogs = [];
+let logIdCounter = 1;
+
+// ---- CURRENT STATE ----
+let currentController = null;
+let selectedFlightId = null;
+
+// ---- LOGIN ----
+function handleLogin(e) {
+  e.preventDefault();
+  const id = parseInt(document.getElementById("controllerId").value);
+  const name = document.getElementById("controllerName").value.trim();
+
+  const controller = controllers.find(
+    c => c.Controller_ID === id && c.Name.toLowerCase() === name.toLowerCase()
+  );
+
+  if (controller) {
+    currentController = controller;
+    document.getElementById("loginError").style.display = "none";
+    showDashboard();
+  } else {
+    document.getElementById("loginError").style.display = "block";
+  }
 }
 
-function showFlights() {
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("flights").style.display = "flex";
+function handleLogout() {
+  currentController = null;
+  document.getElementById("dashboardScreen").classList.remove("active");
+  document.getElementById("loginScreen").classList.add("active");
+  document.getElementById("controllerId").value = "";
+  document.getElementById("controllerName").value = "";
 }
 
-function goBack() {
-    document.getElementById("menu").style.display = "flex";
-    document.getElementById("emergency").style.display = "none";
-    document.getElementById("flights").style.display = "none";
+// ---- SHOW DASHBOARD ----
+function showDashboard() {
+  document.getElementById("loginScreen").classList.remove("active");
+  document.getElementById("dashboardScreen").classList.add("active");
+
+  // Update nav
+  document.getElementById("navControllerName").textContent = currentController.Name;
+  document.getElementById("navControllerRole").textContent = currentController.Role + " Controller";
+  document.getElementById("controllerAvatar").textContent = currentController.Name.charAt(0).toUpperCase();
+
+  renderDashboard();
 }
 
-function submitEmergency() {
-    let id = document.getElementById("fid").value;
-    let type = document.getElementById("etype").value;
-    let priority = document.getElementById("priority").value;
+// ---- RENDER DASHBOARD ----
+function renderDashboard() {
+  const myAssignments = assignments.filter(a => a.Controller_ID === currentController.Controller_ID);
+  const myFlightIds = myAssignments.map(a => a.Flight_ID);
+  const myFlights = flights.filter(f => myFlightIds.includes(f.Flight_ID));
 
-    if(id && type && priority){
-        alert("✅ Emergency Submitted for Flight " + id);
-    } else {
-        alert("⚠️ Please fill all fields");
-    }
+  const myEmergencies = emergencyFlights
+    .filter(ef => myFlightIds.includes(ef.Flight_ID))
+    .sort((a, b) => a.Priority_Level - b.Priority_Level);
+
+  const myNormals = normalFlights.filter(nf => myFlightIds.includes(nf.Flight_ID));
+
+  // Stats
+  document.getElementById("statTotal").textContent = myFlights.length;
+  document.getElementById("statEmergency").textContent = myEmergencies.length;
+
+  const usedRunways = new Set(myFlights.map(f => f.Runway_ID).filter(Boolean));
+  document.getElementById("statRunways").textContent = usedRunways.size;
+
+  const availableGates = gates.filter(g => g.Status === "Available").length;
+  document.getElementById("statGates").textContent = availableGates;
+
+  // Emergency list
+  const emergencyListEl = document.getElementById("emergencyFlightList");
+  emergencyListEl.innerHTML = "";
+  myEmergencies.forEach(ef => {
+    const flight = flights.find(f => f.Flight_ID === ef.Flight_ID);
+    const ac = aircraft.find(a => a.Aircraft_ID === flight.Aircraft_ID);
+    const rw = runways.find(r => r.Runway_ID === flight.Runway_ID);
+
+    const card = document.createElement("div");
+    card.className = "flight-card emergency-card";
+    card.onclick = () => openFlightModal(flight.Flight_ID);
+    card.innerHTML = `
+      <div class="flight-icon">🚨</div>
+      <div class="flight-meta">
+        <h3>Flight #${flight.Flight_ID} <span class="flight-id">${ac ? ac.Model : 'Unknown'}</span></h3>
+        <div class="tags">
+          <span class="tag tag-emergency">${ef.Emergency_Type}</span>
+          <span class="tag tag-priority">P${ef.Priority_Level}</span>
+          <span class="tag tag-status">${flight.Status}</span>
+        </div>
+      </div>
+      <div class="flight-actions-peek">
+        ${rw ? rw.Runway_Code : 'No Runway'}
+        <span class="arrow">→</span>
+      </div>
+    `;
+    emergencyListEl.appendChild(card);
+  });
+
+  document.getElementById("emergencyCount").textContent = myEmergencies.length;
+
+  // Normal list
+  const normalListEl = document.getElementById("normalFlightList");
+  normalListEl.innerHTML = "";
+  myNormals.forEach(nf => {
+    const flight = flights.find(f => f.Flight_ID === nf.Flight_ID);
+    const ac = aircraft.find(a => a.Aircraft_ID === flight.Aircraft_ID);
+    const rw = runways.find(r => r.Runway_ID === flight.Runway_ID);
+    const gt = gates.find(g => g.Gate_ID === flight.Gate_ID);
+
+    const card = document.createElement("div");
+    card.className = "flight-card normal-card";
+    card.onclick = () => openFlightModal(flight.Flight_ID);
+    card.innerHTML = `
+      <div class="flight-icon">🛫</div>
+      <div class="flight-meta">
+        <h3>Flight #${flight.Flight_ID} <span class="flight-id">${ac ? ac.Model : 'Unknown'}</span></h3>
+        <div class="tags">
+          <span class="tag tag-airline">${nf.Airline}</span>
+          <span class="tag tag-status">${flight.Status}</span>
+        </div>
+      </div>
+      <div class="flight-actions-peek">
+        ${rw ? rw.Runway_Code : '—'} / ${gt ? gt.Gate_Number : '—'}
+        <span class="arrow">→</span>
+      </div>
+    `;
+    normalListEl.appendChild(card);
+  });
+
+  document.getElementById("normalCount").textContent = myNormals.length;
 }
+
+// ---- FLIGHT DETAIL MODAL ----
+function openFlightModal(flightId) {
+  selectedFlightId = flightId;
+  const flight = flights.find(f => f.Flight_ID === flightId);
+  if (!flight) return;
+
+  const ac = aircraft.find(a => a.Aircraft_ID === flight.Aircraft_ID);
+  const rw = runways.find(r => r.Runway_ID === flight.Runway_ID);
+  const gt = gates.find(g => g.Gate_ID === flight.Gate_ID);
+  const ef = emergencyFlights.find(e => e.Flight_ID === flightId);
+  const nf = normalFlights.find(n => n.Flight_ID === flightId);
+
+  document.getElementById("modalFlightTitle").textContent = `Flight #${flightId}`;
+
+  // Build detail grid
+  let gridHTML = `
+    <div class="detail-item">
+      <div class="d-label">Flight ID</div>
+      <div class="d-value">#${flight.Flight_ID}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Status</div>
+      <div class="d-value" style="color:var(--info)">${flight.Status}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Aircraft</div>
+      <div class="d-value">${ac ? ac.Model + ' (' + ac.Type + ')' : 'N/A'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Capacity</div>
+      <div class="d-value">${ac ? (ac.Capacity > 0 ? ac.Capacity + ' pax' : 'Cargo') : 'N/A'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Scheduled Time</div>
+      <div class="d-value">${flight.Scheduled_Time || 'N/A'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Actual Time</div>
+      <div class="d-value">${flight.Actual_Time || '—'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Assigned Runway</div>
+      <div class="d-value">${rw ? rw.Runway_Code + ' (' + rw.Status + ')' : 'Not assigned'}</div>
+    </div>
+    <div class="detail-item">
+      <div class="d-label">Assigned Gate</div>
+      <div class="d-value">${gt ? gt.Gate_Number + ' — Terminal ' + gt.Terminal : 'Not assigned'}</div>
+    </div>
+  `;
+
+  if (ef) {
+    gridHTML += `
+      <div class="detail-item full-width" style="border-color:rgba(255,77,106,0.2); background:rgba(255,77,106,0.04)">
+        <div class="d-label" style="color:var(--emergency)">⚠ Emergency Details</div>
+        <div class="d-value" style="color:var(--emergency)">${ef.Emergency_Type} — Priority Level ${ef.Priority_Level}</div>
+      </div>
+    `;
+  }
+  if (nf) {
+    gridHTML += `
+      <div class="detail-item full-width">
+        <div class="d-label">Airline</div>
+        <div class="d-value">${nf.Airline}</div>
+      </div>
+    `;
+  }
+
+  document.getElementById("detailGrid").innerHTML = gridHTML;
+
+  // Populate runway dropdown
+  const runwaySelect = document.getElementById("assignRunway");
+  runwaySelect.innerHTML = '<option value="">Select Runway</option>';
+  runways.forEach(r => {
+    const selected = flight.Runway_ID === r.Runway_ID ? 'selected' : '';
+    runwaySelect.innerHTML += `<option value="${r.Runway_ID}" ${selected}>${r.Runway_Code} (${r.Status})</option>`;
+  });
+
+  // Populate gate dropdown
+  const gateSelect = document.getElementById("assignGate");
+  gateSelect.innerHTML = '<option value="">Select Gate</option>';
+  gates.forEach(g => {
+    const selected = flight.Gate_ID === g.Gate_ID ? 'selected' : '';
+    gateSelect.innerHTML += `<option value="${g.Gate_ID}" ${selected}>${g.Gate_Number} — ${g.Terminal} (${g.Status})</option>`;
+  });
+
+  // Set current status in dropdown
+  const statusSelect = document.getElementById("updateStatus");
+  statusSelect.value = flight.Status;
+
+  // Show modal
+  document.getElementById("flightModal").classList.add("active");
+}
+
+function closeModal() {
+  document.getElementById("flightModal").classList.remove("active");
+  selectedFlightId = null;
+}
+
+// Close modal on overlay click
+document.getElementById("flightModal").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Close modal on Escape
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeModal();
+});
+
+// ---- ACTIONS ----
+function assignRunway() {
+  const flight = flights.find(f => f.Flight_ID === selectedFlightId);
+  const rwId = parseInt(document.getElementById("assignRunway").value);
+  if (!flight || !rwId) { showToast("Please select a runway", "error"); return; }
+
+  flight.Runway_ID = rwId;
+  const rw = runways.find(r => r.Runway_ID === rwId);
+
+  // Log it
+  statusLogs.push({
+    Log_ID: logIdCounter++,
+    Flight_ID: selectedFlightId,
+    Status: `Runway changed to ${rw.Runway_Code}`,
+    Timestamp: new Date().toISOString()
+  });
+
+  showToast(`Runway ${rw.Runway_Code} assigned to Flight #${selectedFlightId}`, "success");
+  renderDashboard();
+  openFlightModal(selectedFlightId); // refresh detail
+}
+
+function assignGate() {
+  const flight = flights.find(f => f.Flight_ID === selectedFlightId);
+  const gId = parseInt(document.getElementById("assignGate").value);
+  if (!flight || !gId) { showToast("Please select a gate", "error"); return; }
+
+  flight.Gate_ID = gId;
+  const gt = gates.find(g => g.Gate_ID === gId);
+
+  statusLogs.push({
+    Log_ID: logIdCounter++,
+    Flight_ID: selectedFlightId,
+    Status: `Gate changed to ${gt.Gate_Number}`,
+    Timestamp: new Date().toISOString()
+  });
+
+  showToast(`Gate ${gt.Gate_Number} assigned to Flight #${selectedFlightId}`, "success");
+  renderDashboard();
+  openFlightModal(selectedFlightId);
+}
+
+function updateFlightStatus() {
+  const flight = flights.find(f => f.Flight_ID === selectedFlightId);
+  const newStatus = document.getElementById("updateStatus").value;
+  if (!flight || !newStatus) { showToast("Please select a status", "error"); return; }
+
+  const oldStatus = flight.Status;
+  flight.Status = newStatus;
+
+  // Set actual time if landing/landed
+  if (newStatus === "Landed" || newStatus === "At Gate") {
+    flight.Actual_Time = new Date().toISOString().replace("T", " ").substring(0, 16);
+  }
+
+  statusLogs.push({
+    Log_ID: logIdCounter++,
+    Flight_ID: selectedFlightId,
+    Status: `${oldStatus} → ${newStatus}`,
+    Timestamp: new Date().toISOString()
+  });
+
+  showToast(`Flight #${selectedFlightId} status updated to "${newStatus}"`, "success");
+  renderDashboard();
+  openFlightModal(selectedFlightId);
+}
+
+// ---- TOAST ----
+function showToast(message, type = "info") {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
 </script>
 
 </body>
