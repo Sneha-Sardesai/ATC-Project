@@ -12,10 +12,16 @@ public class ATCService {
 
     // 1. Add new flight
     public void addNewFlight(int flightId, String status,
-                             int aircraftId, int runwayId, int gateId) {
-        flightDAO.addFlight(flightId, status, aircraftId, runwayId, gateId);
+                         int aircraftId, int runwayId, int gateId) {
+
+    boolean success = flightDAO.addFlight(flightId, status, aircraftId, runwayId, gateId);
+
+    if (success) {
         System.out.println("Flight added successfully.");
+    } else {
+        System.out.println("Failed to add flight. Check IDs (Aircraft/Runway/Gate).");
     }
+}
 
     // 2. Declare emergency
     public void declareEmergency(int flightId, String type, int priority) {

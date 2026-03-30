@@ -9,24 +9,25 @@ import db.DBConnection;
 public class FlightDAO {
 
     // 1. Add Flight
-    public void addFlight(int flightId, String status, int aircraftId, int runwayId, int gateId) {
-        try {
-            Connection conn = DBConnection.getConnection();
+    public boolean addFlight(int flightId, String status, int aircraftId, int runwayId, int gateId) {
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            CallableStatement cs = conn.prepareCall("{CALL AddFlight(?, ?, ?, ?, ?)}");
-            cs.setInt(1, flightId);
-            cs.setString(2, status);
-            cs.setInt(3, aircraftId);
-            cs.setInt(4, runwayId);
-            cs.setInt(5, gateId);
+        CallableStatement cs = conn.prepareCall("{CALL AddFlight(?, ?, ?, ?, ?)}");
+        cs.setInt(1, flightId);
+        cs.setString(2, status);
+        cs.setInt(3, aircraftId);
+        cs.setInt(4, runwayId);
+        cs.setInt(5, gateId);
 
-            cs.execute();
-            System.out.println("Flight added successfully!");
+        cs.execute();
+        return true;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
     }
+}
 
     // 2. Declare Emergency
     public void declareEmergency(int flightId, String type, int priority) {
@@ -120,4 +121,40 @@ public class FlightDAO {
             e.printStackTrace();
         }
     }
+
+    public boolean assignController(int assignmentId, int flightId, int controllerId) {
+    try {
+        Connection conn = DBConnection.getConnection();
+
+        CallableStatement cs = conn.prepareCall("{CALL AssignController(?, ?, ?)}");
+        cs.setInt(1, assignmentId);
+        cs.setInt(2, flightId);
+        cs.setInt(3, controllerId);
+
+        cs.execute();
+        return true;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+public boolean addStatusLog(int logId, int flightId, String status) {
+    try {
+        Connection conn = DBConnection.getConnection();
+
+        CallableStatement cs = conn.prepareCall("{CALL AddStatusLog(?, ?, ?)}");
+        cs.setInt(1, logId);
+        cs.setInt(2, flightId);
+        cs.setString(3, status);
+
+        cs.execute();
+        return true;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
 }
