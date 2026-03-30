@@ -17,6 +17,8 @@ public class App {
             System.out.println("4. Assign Runway");
             System.out.println("5. Assign Gate");
             System.out.println("6. Update Flight Status");
+            System.out.println("7. Assign Controller");
+            System.out.println("8. Add Status Log");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
@@ -26,27 +28,27 @@ public class App {
 
                 case 1:
                     System.out.print("Flight ID: ");
-                    int fid = sc.nextInt();
+                    int fId = sc.nextInt();
                     sc.nextLine();
 
                     System.out.print("Status: ");
                     String status = sc.nextLine();
 
                     System.out.print("Aircraft ID: ");
-                    int aid = sc.nextInt();
+                    int aId = sc.nextInt();
 
                     System.out.print("Runway ID: ");
-                    int rid = sc.nextInt();
+                    int rId = sc.nextInt();
 
                     System.out.print("Gate ID: ");
-                    int gid = sc.nextInt();
+                    int gId = sc.nextInt();
 
-                    service.addNewFlight(fid, status, aid, rid, gid);
+                    service.addNewFlight(fId, status, aId, rId, gId);
                     break;
 
                 case 2:
                     System.out.print("Flight ID: ");
-                    int efid = sc.nextInt();
+                    int efId = sc.nextInt();
                     sc.nextLine();
 
                     System.out.print("Emergency Type: ");
@@ -55,7 +57,7 @@ public class App {
                     System.out.print("Priority Level: ");
                     int priority = sc.nextInt();
 
-                    service.declareEmergency(efid, type, priority);
+                    service.declareEmergency(efId, type, priority);
                     break;
 
                 case 3:
@@ -64,25 +66,64 @@ public class App {
 
                 case 4:
                     System.out.print("Flight ID: ");
-                    service.assignRunway(sc.nextInt(), sc.nextInt());
+                    int frId = sc.nextInt();
+
+                    System.out.print("Runway ID: ");
+                    int runId = sc.nextInt();
+
+                    service.assignRunway(frId, runId);
                     break;
 
                 case 5:
                     System.out.print("Flight ID: ");
-                    service.assignGate(sc.nextInt(), sc.nextInt());
+                    int fgId = sc.nextInt();
+
+                    System.out.print("Gate ID: ");
+                    int gateId = sc.nextInt();
+
+                    service.assignGate(fgId, gateId);
                     break;
 
                 case 6:
                     System.out.print("Flight ID: ");
-                    int ufid = sc.nextInt();
+                    int fsId = sc.nextInt();
                     sc.nextLine();
 
                     System.out.print("New Status: ");
-                    service.updateFlightStatus(ufid, sc.nextLine());
+                    String newStatus = sc.nextLine();
+
+                    service.updateFlightStatus(fsId, newStatus);
+                    break;
+
+                case 7:
+                    System.out.print("Assignment ID: ");
+                    int asgId = sc.nextInt();
+
+                    System.out.print("Flight ID: ");
+                    int flId = sc.nextInt();
+
+                    System.out.print("Controller ID: ");
+                    int cId = sc.nextInt();
+
+                    service.assignController(asgId, flId, cId);
+                    break;
+
+                case 8:
+                    System.out.print("Log ID: ");
+                    int logId = sc.nextInt();
+
+                    System.out.print("Flight ID: ");
+                    int lfId = sc.nextInt();
+                    sc.nextLine();
+
+                    System.out.print("Status: ");
+                    String logStatus = sc.nextLine();
+
+                    service.addStatusLog(logId, lfId, logStatus);
                     break;
 
                 case 0:
-                    System.out.println("Exiting system...");
+                    System.out.println("Exiting system.");
                     sc.close();
                     return;
 

@@ -51,4 +51,20 @@ public class ATCService {
         flightDAO.updateFlightStatus(flightId, status);
         System.out.println("Flight status updated.");
     }
+
+    public void assignController(int assignmentId, int flightId, int controllerId) {
+        if (flightDAO.assignController(assignmentId, flightId, controllerId)) {
+            System.out.println("Controller assigned.");
+        } else {
+            System.out.println("Failed to assign controller.");
+        }
+    }
+
+    public void addStatusLog(int logId, int flightId, String status) {
+        if (flightDAO.addStatusLog(logId, flightId, status)) {
+            System.out.println("Status log added.");
+        } else {
+            System.out.println("Failed to add log.");
+        }
+    }
 }
