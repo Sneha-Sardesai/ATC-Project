@@ -8,7 +8,7 @@ public class DBConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/ATC_DB";
     private static final String USER = "root";      // change if needed
-    private static final String PASSWORD = "conspire";  // change if needed
+    private static final String PASSWORD = "OpenEveryDoor2386*";  // change if needed
 
     public static Connection getConnection() {
         Connection conn = null;
