@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "JDBCTest",
+            "request": "launch",
+            "mainClass": "JDBCTest",
+            "projectName": "ATC-Project_f2d6087f"
+        },
+        {
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
