@@ -1,10 +1,10 @@
-package enums;
+package model;
 
 public enum FlightStatus {
     APPROACHING,
+    HOLDING,
     LANDED,
     TAXIING,
-    AT_GATE,
-    DEPARTED,
+    GATE_ASSIGNED,
     EMERGENCY
 }

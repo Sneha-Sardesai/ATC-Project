@@ -1,48 +1,62 @@
 package service;
 
 import dao.FlightDAO;
-import enums.EmergencyType;
-import enums.FlightStatus;
+import dao.EmergencyDAO;
+import model.FlightStatus;
+import model.EmergencyType;
 
 public class ATCService {
 
-    private final FlightDAO flightDAO = new FlightDAO();
+    private FlightDAO flightDAO = new FlightDAO();
+    private EmergencyDAO emergencyDAO = new EmergencyDAO();
 
-    // SYSTEM creates flights, not user typing random data
-    public void registerIncomingFlight(int flightId,
-                                        int aircraftId,
-                                        int runwayId,
-                                        int gateId) {
+    private ControllerSession session;
 
-        try {
-            flightDAO.addFlight(
-                    flightId,
-                    FlightStatus.APPROACHING.name(),
-                    aircraftId,
-                    runwayId,
-                    gateId
-            );
-        } catch (Exception e) {
-            System.out.println("Flight registration failed.");
-        }
+    public ATCService(ControllerSession session) {
+        this.session = session;
     }
 
-    // Controller action
-    public void declareEmergency(int flightId,
-                                 EmergencyType type,
-                                 int priority) {
+    // SYSTEM creates flights (not user typing random stuff)
+    public void systemAddFlight(int flightId, int aircraftId) {
+        flightDAO.addFlight(
+            flightId,
+            FlightStatus.APPROACHING.name(),
+            aircraftId,
+            null,
+            null
+        );
+    }
 
-        try {
-            flightDAO.declareEmergency(
-                    flightId,
-                    type.name(),
-                    priority
-            );
+    // Controller declares emergency
+    public void declareEmergency(
+            int flightId,
+            EmergencyType type,
+            int priority) {
 
-            // Also update flight status
-            // (later you’ll use a procedure for this)
-        } catch (Exception e) {
-            System.out.println("Emergency declaration failed.");
-        }
+        emergencyDAO.declareEmergency(
+            flightId,
+            type.name(),
+            priority
+        );
+
+        flightDAO.updateFlightStatus(
+            flightId,
+            FlightStatus.EMERGENCY.name()
+        );
+    }
+
+    // Controller assigns runway
+    public void assignRunway(int flightId, int runwayId) {
+        flightDAO.assignRunway(flightId, runwayId);
+    }
+
+    // Controller assigns gate
+    public void assignGate(int flightId, int gateId) {
+        flightDAO.assignGate(flightId, gateId);
+    }
+
+    // What THIS controller sees
+    public void viewMyFlights() {
+        flightDAO.getFlightsForController(session.getControllerId());
     }
 }

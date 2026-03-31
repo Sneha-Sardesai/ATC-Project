@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "App",
+            "projectName": "ATC-Project_464b1299"
+        },
+        {
+            "type": "java",
             "name": "JDBCTest",
             "request": "launch",
             "mainClass": "JDBCTest",

@@ -1,10 +1,10 @@
 package dao;
 
-import db.DBConnection;
-import model.enums.EmergencyType;
-
-import java.sql.Connection;
 import java.sql.CallableStatement;
+import java.sql.Connection;
+
+import db.DBConnection;
+import enums.EmergencyType;
 
 public class EmergencyDAO {
 

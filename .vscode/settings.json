@@ -4,8 +4,9 @@
     "c:\\Users\\Admin\\Desktop\\Education\\SIT\\CSE-related stuff\\Projects\\ATC-Project\\backend\\lib\\mysql-connector-j-9.6.0.jar"
   ],
   "java.project.sourcePaths": [
-    "backend\\src",
-    "backend\\lib"
+    "backend/src",
+    "backend/lib",
+    "dream project/backend/src/app"
   ],
   "sqltools.connections": [
     {
