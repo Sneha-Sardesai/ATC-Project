@@ -86,4 +86,21 @@ public class FlightDAO {
             cs.execute();
         }
     }
+
+    // =========================
+    // STALL APPROACHING FLIGHTS
+    // =========================
+    public void stallApproachingFlightsForController(int controllerId) throws SQLException {
+        // Find all APPROACHING flights assigned to this controller and change their status to HOLDING
+        String sql = "UPDATE flights f JOIN assignments a ON f.flight_id = a.flight_id " +
+                     "SET f.status = 'HOLDING' " +
+                     "WHERE a.controller_id = ? AND f.status = 'APPROACHING'";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, controllerId);
+            ps.executeUpdate();
+        }
+    }
 }

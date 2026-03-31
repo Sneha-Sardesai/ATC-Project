@@ -2,7 +2,7 @@
   "java.project.referencedLibraries": [
     "c:\\Users\\Admin\\Desktop\\Education\\SIT\\CSE-related stuff\\Projects\\ATC-Project\\backend\\lib\\mysql-connector-j-9.6.0.jar"
   ],
-  "java.project.sourcePaths": ["dream project\\backend\\src"],
+  "java.project.sourcePaths": ["dream project/backend/src", "backend/src/app"],
   "sqltools.connections": [
     {
       "mysqlOptions": {

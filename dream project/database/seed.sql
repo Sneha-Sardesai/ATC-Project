@@ -6,6 +6,12 @@ INSERT INTO controllers VALUES
 (2, 'Neha'),
 (3, 'Rahul');
 
+-- Aircrafts
+INSERT INTO aircraft VALUES
+(101, 'Boeing 737', 150, 'Commercial'),
+(102, 'Airbus A320', 180, 'Commercial'),
+(103, 'Cessna 172', 4, 'Private');
+
 -- Optional: preloaded flights (system can also add later)
 INSERT INTO flights VALUES
 (500, 101, 'APPROACHING', NULL, NULL),

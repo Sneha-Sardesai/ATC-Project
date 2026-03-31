@@ -11,12 +11,29 @@ public class ATCService {
 
     private FlightDAO flightDAO;
     private EmergencyDAO emergencyDAO;
+    private AssignmentEngine assignmentEngine;
     private ControllerSession session;
+    private scheduler.EmergencyScheduler emergencyScheduler;
 
     public ATCService(ControllerSession session) {
         this.session = session;
         this.flightDAO = new FlightDAO();
         this.emergencyDAO = new EmergencyDAO();
+        this.assignmentEngine = new AssignmentEngine();
+        this.emergencyScheduler = new scheduler.EmergencyScheduler();
+    }
+
+    public static ControllerSession loginController(int controllerId) {
+        try {
+            dao.ControllerDAO cDAO = new dao.ControllerDAO();
+            model.Controller c = cDAO.login(controllerId);
+            if (c != null) {
+                return new ControllerSession(c.getControllerId(), c.getName());
+            }
+        } catch (Exception e) {
+            System.err.println("Login failed: " + e.getMessage());
+        }
+        return null;
     }
 
     // SYSTEM creates flight (controller does NOT type everything)
@@ -30,6 +47,7 @@ public class ATCService {
                     null
             );
             System.out.println("Flight " + flightId + " added by system.");
+            assignmentEngine.dispatchFlight(flightId);
         } catch (SQLException e) {
             System.out.println("Failed to add flight.");
             e.printStackTrace();
@@ -40,7 +58,14 @@ public class ATCService {
     public void declareEmergency(int flightId, EmergencyType type, int priority) {
         try {
             emergencyDAO.declareEmergency(flightId, type.name(), priority);
-            System.out.println("Emergency declared for flight " + flightId);
+            emergencyScheduler.addEmergency(flightId, priority);
+            System.out.println("Emergency declared for flight " + flightId + " [Priority: " + priority + "]");
+
+            if (session != null) {
+                System.out.println("Controller " + session.getControllerName() + " is handling the emergency. Stalling other normal flights...");
+                stallNormalFlights(session.getControllerId());
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -69,6 +94,16 @@ public class ATCService {
         try {
             flightDAO.updateFlightStatus(flightId, status.name());
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stallNormalFlights(int controllerId) {
+        try {
+            flightDAO.stallApproachingFlightsForController(controllerId);
+            System.out.println("All other approaching flights assigned to Controller ID " + controllerId + " are now HOLDING.");
+        } catch (SQLException e) {
+            System.err.println("Failed to stall flights.");
             e.printStackTrace();
         }
     }

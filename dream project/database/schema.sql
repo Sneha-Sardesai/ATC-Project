@@ -1,4 +1,5 @@
-CREATE DATABASE IF NOT EXISTS ATC_DB;
+DROP DATABASE IF EXISTS ATC_DB;
+CREATE DATABASE ATC_DB;
 USE ATC_DB;
 
 -- =========================
@@ -7,6 +8,16 @@ USE ATC_DB;
 CREATE TABLE controllers (
     controller_id INT PRIMARY KEY,
     name VARCHAR(50) NOT NULL
+);
+
+-- =========================
+-- AIRCRAFTS
+-- =========================
+CREATE TABLE aircraft (
+    Aircraft_ID INT PRIMARY KEY,
+    model VARCHAR(50) NOT NULL,
+    capacity INT NOT NULL,
+    type VARCHAR(30) NOT NULL
 );
 
 -- =========================
