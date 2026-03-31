@@ -6,26 +6,19 @@ import java.sql.SQLException;
 
 public class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/ATC_DB";
-    private static final String USER = "root";      // change if needed
-    private static final String PASSWORD = "Yunijoseph@05";  // change if needed
-
-    public static Connection getConnection() {
-        Connection conn = null;
-
+    static {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("Database connected successfully!");
-
+            Class.forName(DBConfig.DRIVER);
         } catch (ClassNotFoundException e) {
-            System.out.println("MySQL Driver not found");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            System.out.println("Database connection failed");
-            e.printStackTrace();
+            throw new RuntimeException("MySQL Driver not found", e);
         }
+    }
 
-        return conn;
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(
+                DBConfig.URL,
+                DBConfig.USER,
+                DBConfig.PASSWORD
+        );
     }
 }
