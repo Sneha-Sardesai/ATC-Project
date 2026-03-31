@@ -16,47 +16,58 @@ public class ATCService {
         this.session = session;
     }
 
-    // SYSTEM creates flights (not user typing random stuff)
+    // ===============================
+    // SYSTEM creates flights automatically
+    // ===============================
     public void systemAddFlight(int flightId, int aircraftId) {
+
         flightDAO.addFlight(
-            flightId,
-            FlightStatus.APPROACHING.name(),
-            aircraftId,
-            null,
-            null
+                flightId,
+                FlightStatus.APPROACHING.name(),
+                aircraftId,
+                null,   // runwayId (Integer)
+                null    // gateId (Integer)
         );
+
+        System.out.println("System added flight " + flightId);
     }
 
+    // ===============================
     // Controller declares emergency
-    public void declareEmergency(
-            int flightId,
-            EmergencyType type,
-            int priority) {
+    // ===============================
+    public void declareEmergency(int flightId, EmergencyType type, int priority) {
 
         emergencyDAO.declareEmergency(
-            flightId,
-            type.name(),
-            priority
+                flightId,
+                type.name(),
+                priority
         );
 
         flightDAO.updateFlightStatus(
-            flightId,
-            FlightStatus.EMERGENCY.name()
+                flightId,
+                FlightStatus.EMERGENCY.name()
         );
+
+        System.out.println("Emergency declared for flight " + flightId);
     }
 
+    // ===============================
     // Controller assigns runway
+    // ===============================
     public void assignRunway(int flightId, int runwayId) {
+
         flightDAO.assignRunway(flightId, runwayId);
+
+        System.out.println("Runway " + runwayId + " assigned to flight " + flightId);
     }
 
+    // ===============================
     // Controller assigns gate
+    // ===============================
     public void assignGate(int flightId, int gateId) {
-        flightDAO.assignGate(flightId, gateId);
-    }
 
-    // What THIS controller sees
-    public void viewMyFlights() {
-        flightDAO.getFlightsForController(session.getControllerId());
+        flightDAO.assignGate(flightId, gateId);
+
+        System.out.println("Gate " + gateId + " assigned to flight " + flightId);
     }
 }
