@@ -1,0 +1,33 @@
+USE ATC_DB;
+
+-- CONTROLLERS
+INSERT INTO CONTROLLER (name, username, password)
+VALUES
+('Amit', 'amit_atc', 'pass123'),
+('Riya', 'riya_atc', 'pass123');
+
+-- AIRCRAFT
+INSERT INTO AIRCRAFT VALUES
+(1, 'Boeing 737', 180, 'Passenger'),
+(2, 'Airbus A320', 160, 'Passenger');
+
+-- RUNWAYS
+INSERT INTO RUNWAY VALUES
+(1, 'RW-01', 'AVAILABLE'),
+(2, 'RW-02', 'AVAILABLE');
+
+-- GATES
+INSERT INTO GATE VALUES
+(1, 'G1', 'T1', 'AVAILABLE'),
+(2, 'G2', 'T1', 'AVAILABLE');
+
+-- SYSTEM-GENERATED FLIGHTS
+INSERT INTO FLIGHT VALUES
+(101, 'IndiGo', 'APPROACHING', NOW(), NULL, 1, 1, 1),
+(102, 'Air India', 'HOLDING', NOW(), NULL, 2, 2, 2);
+
+-- ASSIGN FLIGHTS TO CONTROLLERS
+INSERT INTO FLIGHT_CONTROLLER_ASSIGNMENT (flight_id, controller_id)
+VALUES
+(101, 1),
+(102, 2);
