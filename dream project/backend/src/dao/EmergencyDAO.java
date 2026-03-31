@@ -2,23 +2,27 @@ package dao;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import db.DBConnection;
 
 public class EmergencyDAO {
 
-    public void declareEmergency(int flightId, String type, int priority) {
-        try (Connection conn = DBConnection.getConnection()) {
-            CallableStatement stmt =
-                conn.prepareCall("{CALL DeclareEmergency(?, ?, ?)}");
+    public void declareEmergency(
+            int flightId,
+            String emergencyType,
+            int priority
+    ) throws SQLException {
 
-            stmt.setInt(1, flightId);
-            stmt.setString(2, type);
-            stmt.setInt(3, priority);
+        String sql = "{CALL DeclareEmergency(?, ?, ?)}";
 
-            stmt.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (Connection conn = DBConnection.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, flightId);
+            cs.setString(2, emergencyType);
+            cs.setInt(3, priority);
+            cs.execute();
         }
     }
 }

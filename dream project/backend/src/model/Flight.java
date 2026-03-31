@@ -1,6 +1,6 @@
 package model;
 
-import enums.FlightStatus;
+import model.FlightStatus;
 
 public class Flight {
 

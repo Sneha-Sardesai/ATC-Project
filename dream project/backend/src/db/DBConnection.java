@@ -2,24 +2,23 @@ package db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 
 public class DBConnection {
 
     private static final String URL =
-        "jdbc:mysql://localhost:3306/atc_db?useSSL=false&serverTimezone=UTC";
+            "jdbc:mysql://localhost:3306/ATC_DB"
+            + "?useSSL=false"
+            + "&allowPublicKeyRetrieval=true"
+            + "&serverTimezone=UTC";
+
     private static final String USER = "root";
-    private static final String PASSWORD = "your_password";
+    private static final String PASSWORD = "OpenEveryDoor2386*";
 
-    static {
+    public static Connection getConnection() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("MySQL Driver not found", e);
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (Exception e) {
+            throw new RuntimeException("Database connection failed", e);
         }
-    }
-
-    public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 }
