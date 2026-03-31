@@ -1,9 +1,10 @@
 package enums;
 
 public enum FlightStatus {
-    SCHEDULED,
     APPROACHING,
-    HOLDING,
     LANDED,
+    TAXIING,
+    AT_GATE,
+    DEPARTED,
     EMERGENCY
 }

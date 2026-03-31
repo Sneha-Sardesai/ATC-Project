@@ -1,49 +1,35 @@
 package dao;
 
-import java.sql.CallableStatement;
+import db.DBConnection;
+import model.enums.FlightStatus;
+
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.CallableStatement;
 
-public class FlightDAO extends BaseDAO {
+public class FlightDAO {
 
-    public void addFlight(int flightId, String status,
-                          int aircraftId, int runwayId, int gateId)
-            throws SQLException {
+    public void addFlight(int flightId, int aircraftId) throws Exception {
+        String sql = "{CALL AddFlight(?, ?, ?)}";
 
-        String sql = "{CALL AddFlight(?,?,?,?,?)}";
-
-        try (Connection conn = getConnection();
+        try (Connection conn = DBConnection.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, flightId);
-            cs.setString(2, status);
+            cs.setString(2, FlightStatus.APPROACHING.name());
             cs.setInt(3, aircraftId);
-            cs.setInt(4, runwayId);
-            cs.setInt(5, gateId);
 
             cs.execute();
         }
     }
 
-    public ResultSet getEmergencyFlights() throws SQLException {
-        String sql = "{CALL GetEmergencyFlights()}";
-        Connection conn = getConnection();
-        CallableStatement cs = conn.prepareCall(sql);
-        return cs.executeQuery();
-    }
+    public void updateFlightStatus(int flightId, FlightStatus status) throws Exception {
+        String sql = "{CALL UpdateFlightStatus(?, ?)}";
 
-    public void declareEmergency(int flightId, String type, int priority)
-            throws SQLException {
-
-        String sql = "{CALL DeclareEmergency(?,?,?)}";
-
-        try (Connection conn = getConnection();
+        try (Connection conn = DBConnection.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, flightId);
-            cs.setString(2, type);
-            cs.setInt(3, priority);
+            cs.setString(2, status.name());
             cs.execute();
         }
     }
