@@ -1,25 +1,31 @@
-DELIMITER $$
+USE ATC_DB;
 
-CREATE TRIGGER trg_emergency_status
-AFTER INSERT ON EMERGENCY_FLIGHT
+-- =========================
+-- PREVENT GATE ASSIGNMENT WITHOUT LANDING
+-- =========================
+DELIMITER //
+CREATE TRIGGER trg_gate_only_after_landing
+BEFORE UPDATE ON flights
 FOR EACH ROW
 BEGIN
-    UPDATE FLIGHT
-    SET Current_Status = 'EMERGENCY'
-    WHERE Flight_ID = NEW.Flight_ID;
-END$$
-
-DELIMITER ;
-DELIMITER $$
-
-CREATE TRIGGER trg_block_assignment_emergency
-BEFORE UPDATE ON FLIGHT
-FOR EACH ROW
-BEGIN
-    IF OLD.Current_Status = 'EMERGENCY' THEN
+    IF NEW.gate_id IS NOT NULL AND OLD.status NOT IN ('LANDED', 'EMERGENCY') THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Cannot reassign runway/gate during emergency';
+        SET MESSAGE_TEXT = 'Gate can only be assigned after landing or during emergency';
     END IF;
-END$$
+END//
+DELIMITER ;
 
+-- =========================
+-- EMERGENCY PRIORITY CHECK
+-- =========================
+DELIMITER //
+CREATE TRIGGER trg_emergency_priority_check
+BEFORE INSERT ON emergencies
+FOR EACH ROW
+BEGIN
+    IF NEW.priority < 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Emergency priority must be >= 1';
+    END IF;
+END//
 DELIMITER ;
