@@ -8,6 +8,13 @@
             "type": "java",
             "name": "App",
             "request": "launch",
+            "mainClass": "App",
+            "projectName": "ATC-Project_a0ecc11d"
+        },
+        {
+            "type": "java",
+            "name": "App",
+            "request": "launch",
             "mainClass": "app.App",
             "projectName": "ATC-Project_464b1299"
         },
