@@ -62,11 +62,11 @@ public class ATCService {
     }
 
     // SYSTEM creates flight (controller does NOT type everything)
-    public void systemAddFlight(int flightId, int aircraftId) {
+    public void systemAddFlight(int flightId, String status, int aircraftId) {
         try {
             flightDAO.addFlight(
                     flightId,
-                    FlightStatus.APPROACHING.name(),
+                    status,
                     aircraftId,
                     null,
                     null

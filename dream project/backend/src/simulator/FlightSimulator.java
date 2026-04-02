@@ -5,6 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import model.EmergencyType;
+import model.FlightStatus;
 import service.ATCService;
 
 public class FlightSimulator {
@@ -41,15 +43,43 @@ public class FlightSimulator {
                 int newFlightId = flightIdCounter.getAndIncrement();
                 int randomAircraftId = AIRCRAFT_IDS[random.nextInt(AIRCRAFT_IDS.length)];
                 
-                System.out.println("--- [SIMULATOR] New approaching flight detected on radar: " + newFlightId + " ---");
-                atcService.systemAddFlight(newFlightId, randomAircraftId);
+                // Randomize flight status with realistic distribution:
+                // APPROACHING: 30%, HOLDING: 25%, TAXIING: 20%, GATE_ASSIGNED: 15%, LANDED: 5%, EMERGENCY: 5%
+                FlightStatus status;
+                int rand = random.nextInt(100);
+                if (rand < 30) {
+                    status = FlightStatus.APPROACHING;
+                } else if (rand < 55) {
+                    status = FlightStatus.HOLDING;
+                } else if (rand < 75) {
+                    status = FlightStatus.TAXIING;
+                } else if (rand < 90) {
+                    status = FlightStatus.GATE_ASSIGNED;
+                } else if (rand < 95) {
+                    status = FlightStatus.LANDED;
+                } else {
+                    status = FlightStatus.EMERGENCY;
+                }
+                
+                System.out.println("--- [SIMULATOR] New " + status.toString().toLowerCase() + " flight detected on radar: " + newFlightId + " ---");
+                atcService.systemAddFlight(newFlightId, status.name(), randomAircraftId);
+                
+                // If emergency, declare it
+                if (status == FlightStatus.EMERGENCY) {
+                    // Random emergency type and priority
+                    EmergencyType[] types = EmergencyType.values();
+                    EmergencyType emergencyType = types[random.nextInt(types.length)];
+                    int priority = random.nextInt(5) + 1; // 1-5
+                    
+                    atcService.declareEmergency(newFlightId, emergencyType, priority);
+                }
             } catch (Exception e) {
                 System.err.println("Error generating flight: " + e.getMessage());
             }
         };
 
-        // Schedule to run every 15 seconds
-        scheduler.scheduleAtFixedRate(task, 5, 15, TimeUnit.SECONDS);
+        // Schedule to run every 60 seconds
+        scheduler.scheduleAtFixedRate(task, 5, 60, TimeUnit.SECONDS);
     }
 
     public void stop() {
