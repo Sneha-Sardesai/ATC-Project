@@ -2,9 +2,10 @@ USE ATC_DB;
 
 -- Controllers
 INSERT INTO controllers VALUES
-(1, 'Amit'),
-(2, 'Neha'),
-(3, 'Rahul');
+(1, 'Amit', 'password1'),
+(2, 'Neha', 'password2'),
+(3, 'Rahul', 'password3'),
+(4, 'Kerris', '123456');
 
 -- Aircrafts
 INSERT INTO aircraft VALUES

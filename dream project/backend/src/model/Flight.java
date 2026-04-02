@@ -1,7 +1,5 @@
 package model;
 
-import model.FlightStatus;
-
 public class Flight {
 
     private int flightId;
@@ -21,4 +19,7 @@ public class Flight {
 
     public int getFlightId() { return flightId; }
     public FlightStatus getStatus() { return status; }
+    public int getAircraftId() { return aircraftId; }
+    public int getRunwayId() { return runwayId; }
+    public int getGateId() { return gateId; }
 }

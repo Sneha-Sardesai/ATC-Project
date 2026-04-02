@@ -6,9 +6,11 @@ USE ATC_DB;
 -- CONTROLLERS
 -- =========================
 CREATE TABLE controllers (
-    controller_id INT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL
-);
+    controller_id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    PRIMARY KEY (controller_id)
+) ENGINE=InnoDB;
 
 -- =========================
 -- AIRCRAFTS
@@ -71,3 +73,15 @@ CREATE TABLE emergencies (
 
     FOREIGN KEY (flight_id) REFERENCES flights(flight_id)
 );
+
+-- Ensure controller_id is auto-increment and compatible with FK references in assignments
+SET FOREIGN_KEY_CHECKS = 0;
+ALTER TABLE controllers MODIFY controller_id INT NOT NULL AUTO_INCREMENT;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Backfill passwords on seed data
+INSERT INTO controllers (controller_id, name, password) VALUES
+    (1, 'Amit', 'password1'),
+    (2, 'Neha', 'password2'),
+    (3, 'Rahul', 'password3')
+ON DUPLICATE KEY UPDATE password = VALUES(password);

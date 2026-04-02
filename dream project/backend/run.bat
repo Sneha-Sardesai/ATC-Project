@@ -1,5 +1,5 @@
 @echo off
-javac -d bin -cp "src;lib/*" src/app/App.java src/simulator/FlightSimulator.java src/service/*.java src/dao/*.java src/db/*.java src/model/*.java src/scheduler/*.java
+javac -d bin -cp "src;lib/*" src/app/App.java src/simulator/FlightSimulator.java src/service/*.java src/dao/*.java src/db/*.java src/model/*.java src/scheduler/*.java src/api/*.java src/util/*.java
 if %errorlevel% neq 0 (
     echo Compilation Failed
     exit /b %errorlevel%

@@ -1,10 +1,14 @@
 package dao;
 
+import db.DBConnection;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import db.DBConnection;
+import java.util.ArrayList;
+import java.util.List;
+import model.Flight;
+import model.FlightStatus;
 
 public class FlightDAO {
 
@@ -102,5 +106,76 @@ public class FlightDAO {
             ps.setInt(1, controllerId);
             ps.executeUpdate();
         }
+    }
+
+    // =========================
+    // GET FLIGHTS FOR CONTROLLER
+    // =========================
+    public List<Flight> getFlightsForController(int controllerId) throws SQLException {
+        List<Flight> flights = new ArrayList<>();
+        String sql = "SELECT f.flight_id, f.status, f.aircraft_id, f.runway_id, f.gate_id " +
+                     "FROM flights f JOIN assignments a ON f.flight_id = a.flight_id " +
+                     "WHERE a.controller_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, controllerId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Flight flight = new Flight(
+                    rs.getInt("flight_id"),
+                    FlightStatus.valueOf(rs.getString("status")),
+                    rs.getInt("aircraft_id"),
+                    rs.getInt("runway_id"),
+                    rs.getInt("gate_id")
+                );
+                flights.add(flight);
+            }
+        }
+        return flights;
+    }
+
+    // =========================
+    // GET MAX FLIGHT ID
+    // =========================
+    public int getMaxFlightId() throws SQLException {
+        String sql = "SELECT MAX(flight_id) FROM flights";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    // =========================
+    // GET FLIGHT BY ID
+    // =========================
+    public Flight getFlightById(int flightId) throws SQLException {
+        String sql = "SELECT flight_id, status, aircraft_id, runway_id, gate_id FROM flights WHERE flight_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, flightId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Flight(
+                    rs.getInt("flight_id"),
+                    FlightStatus.valueOf(rs.getString("status")),
+                    rs.getInt("aircraft_id"),
+                    rs.getInt("runway_id"),
+                    rs.getInt("gate_id")
+                );
+            }
+        }
+        return null;
     }
 }

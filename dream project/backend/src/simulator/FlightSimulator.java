@@ -1,11 +1,11 @@
 package simulator;
 
-import service.ATCService;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import service.ATCService;
 
 public class FlightSimulator {
 
@@ -20,8 +20,17 @@ public class FlightSimulator {
     public FlightSimulator(ATCService atcService) {
         this.atcService = atcService;
         this.scheduler = Executors.newScheduledThreadPool(1);
-        this.flightIdCounter = new AtomicInteger(1000); // Start new system-generated flights at 1000
         this.random = new Random();
+        
+        // Get max flight ID from database and start from next + 100 to avoid conflicts
+        try {
+            dao.FlightDAO flightDAO = new dao.FlightDAO();
+            int maxId = flightDAO.getMaxFlightId();
+            this.flightIdCounter = new AtomicInteger(maxId + 100);
+        } catch (Exception e) {
+            System.err.println("Error getting max flight ID: " + e.getMessage());
+            this.flightIdCounter = new AtomicInteger(1000); // fallback
+        }
     }
 
     public void start() {

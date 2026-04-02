@@ -2,34 +2,40 @@ package service;
 
 import dao.AssignmentDAO;
 import dao.ControllerDAO;
-import model.Controller;
-
+import db.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import db.DBConnection;
 
 public class AssignmentEngine {
 
     private ControllerDAO controllerDAO;
     private AssignmentDAO assignmentDAO;
+    private static java.util.Set<Integer> activeControllerIds = new java.util.HashSet<>();
 
     public AssignmentEngine() {
         this.controllerDAO = new ControllerDAO();
         this.assignmentDAO = new AssignmentDAO();
     }
 
+    public static void setActiveController(int controllerId, boolean active) {
+        if (active) {
+            activeControllerIds.add(controllerId);
+        } else {
+            activeControllerIds.remove(controllerId);
+        }
+    }
+
     public void dispatchFlight(int flightId) {
         try {
-            List<Controller> activeControllers = controllerDAO.getAllControllers();
-            if (activeControllers.isEmpty()) {
-                System.err.println("No active controllers available to assign flight " + flightId);
+            if (activeControllerIds.isEmpty()) {
+                System.out.println("No active controllers logged in, assigning flight " + flightId + " to controller 1 as fallback");
+                assignmentDAO.assignController(flightId, 1);
                 return;
             }
 
-            int bestControllerId = getControllerWithLeastLoad(activeControllers);
+            int bestControllerId = getControllerWithLeastLoad(activeControllerIds);
 
             assignmentDAO.assignController(flightId, bestControllerId);
             System.out.println("Flight " + flightId + " successfully assigned to controller " + bestControllerId);
@@ -39,27 +45,37 @@ public class AssignmentEngine {
         }
     }
 
-    private int getControllerWithLeastLoad(List<Controller> activeControllers) throws SQLException {
-        int bestId = activeControllers.get(0).getControllerId();
+    private int getControllerWithLeastLoad(java.util.Set<Integer> activeIds) throws SQLException {
+        int bestId = -1;
         int minLoad = Integer.MAX_VALUE;
 
+        String placeholders = String.join(",", java.util.Collections.nCopies(activeIds.size(), "?"));
         String sql = "SELECT controller_id, COUNT(*) as active_flights FROM assignments a " +
                      "JOIN flights f ON a.flight_id = f.flight_id " +
-                     "WHERE f.status NOT IN ('LANDED') " +
+                     "WHERE f.status NOT IN ('LANDED') AND controller_id IN (" + placeholders + ") " +
                      "GROUP BY controller_id";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int cId = rs.getInt("controller_id");
-                int load = rs.getInt("active_flights");
-                if (load < minLoad) {
-                    minLoad = load;
-                    bestId = cId;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            for (int id : activeIds) {
+                ps.setInt(idx++, id);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int cId = rs.getInt("controller_id");
+                    int load = rs.getInt("active_flights");
+                    if (load < minLoad || (load == minLoad && bestId == -1)) {
+                        minLoad = load;
+                        bestId = cId;
+                    }
                 }
             }
+        }
+
+        // If no controllers have flights yet, pick the first active one
+        if (bestId == -1 && !activeIds.isEmpty()) {
+            bestId = activeIds.iterator().next();
         }
         
         return bestId;
