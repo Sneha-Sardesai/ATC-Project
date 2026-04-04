@@ -156,4 +156,15 @@ public class ATCService {
             e.printStackTrace();
         }
     }
+
+    // Delete all flights
+    public void deleteAllFlights() {
+        try {
+            flightDAO.deleteAllFlights();
+            System.out.println("All flights have been deleted.");
+        } catch (SQLException e) {
+            System.err.println("Failed to delete all flights.");
+            e.printStackTrace();
+        }
+    }
 }

@@ -301,6 +301,34 @@ public class SimpleServer {
             }
         });
 
+        // =========================
+        // DELETE ALL FLIGHTS
+        // =========================
+        server.createContext("/flights/deleteAll", exchange -> {
+            if ("DELETE".equals(exchange.getRequestMethod())) {
+                String sessionId = exchange.getRequestHeaders().getFirst("X-Session-Id");
+                if (sessionId != null) {
+                    int controllerId = Integer.parseInt(sessionId);
+                    ATCService service = sessions.get(controllerId);
+                    if (service != null) {
+                        service.deleteAllFlights();
+                        String response = "{\"message\":\"All flights deleted successfully\"}";
+                        exchange.getResponseHeaders().set("Content-Type", "application/json");
+                        exchange.sendResponseHeaders(200, response.length());
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(response.getBytes());
+                        os.close();
+                    } else {
+                        exchange.sendResponseHeaders(401, 0);
+                    }
+                } else {
+                    exchange.sendResponseHeaders(401, 0);
+                }
+            } else {
+                exchange.sendResponseHeaders(405, 0);
+            }
+        });
+
         server.start();
     }
 }

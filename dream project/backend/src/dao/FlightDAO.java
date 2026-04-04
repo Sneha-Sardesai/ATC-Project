@@ -203,4 +203,16 @@ public class FlightDAO {
         }
         return flights;
     }
+
+    // =========================
+    // DELETE ALL FLIGHTS
+    // =========================
+    public void deleteAllFlights() throws SQLException {
+        String sql = "DELETE FROM flights";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.executeUpdate();
+        }
+    }
 }
