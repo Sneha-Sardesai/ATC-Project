@@ -178,4 +178,29 @@ public class FlightDAO {
         }
         return null;
     }
+
+    // =========================
+    // GET ALL FLIGHTS
+    // =========================
+    public List<Flight> getAllFlights() throws SQLException {
+        List<Flight> flights = new ArrayList<>();
+        String sql = "SELECT flight_id, status, aircraft_id, runway_id, gate_id FROM flights ORDER BY flight_id";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Flight flight = new Flight(
+                    rs.getInt("flight_id"),
+                    FlightStatus.valueOf(rs.getString("status")),
+                    rs.getInt("aircraft_id"),
+                    rs.getInt("runway_id"),
+                    rs.getInt("gate_id")
+                );
+                flights.add(flight);
+            }
+        }
+        return flights;
+    }
 }

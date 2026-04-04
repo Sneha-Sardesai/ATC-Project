@@ -16,18 +16,21 @@ public class SimpleServer {
     private static Map<Integer, ATCService> sessions = new java.util.HashMap<>();
 
     public static void main(String[] args) throws Exception {
+        System.out.println("Starting ATC Server...");
 
         int port = 8080;
         HttpServer server = null;
         while (server == null && port < 8090) {
             try {
+                System.out.println("Trying port " + port + "...");
                 server = HttpServer.create(new InetSocketAddress(port), 0);
+                System.out.println("Server created on port " + port);
             } catch (Exception e) {
-                System.out.println("Port " + port + " in use, trying " + (port + 1));
+                System.out.println("Port " + port + " in use, trying " + (port + 1) + ": " + e.getMessage());
                 port++;
             }
         }
-        
+
         if (server == null) {
             System.err.println("Could not find available port");
             return;
@@ -68,7 +71,7 @@ public class SimpleServer {
                 InputStream is = exchange.getRequestBody();
                 String body = new String(is.readAllBytes());
                 Map<String, Object> request = SimpleJSONParser.parse(body);
-                
+
                 ControllerSession session = null;
                 if (request.containsKey("controllerId")) {
                     // Legacy login by ID
@@ -80,15 +83,14 @@ public class SimpleServer {
                     String password = (String) request.get("password");
                     session = ATCService.loginController(name, password);
                 }
-                
+
                 if (session != null) {
                     ATCService service = new ATCService(session);
                     sessions.put(session.getControllerId(), service);
                     service.setControllerActive(session.getControllerId(), true);
                     String response = JSONUtil.toJson(java.util.Map.of(
-                        "sessionId", String.valueOf(session.getControllerId()),
-                        "controllerName", session.getControllerName()
-                    ));
+                            "sessionId", String.valueOf(session.getControllerId()),
+                            "controllerName", session.getControllerName()));
                     exchange.getResponseHeaders().set("Content-Type", "application/json");
                     exchange.sendResponseHeaders(200, response.length());
                     OutputStream os = exchange.getResponseBody();

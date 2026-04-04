@@ -62,14 +62,14 @@ public class ATCService {
     }
 
     // SYSTEM creates flight (controller does NOT type everything)
-    public void systemAddFlight(int flightId, String status, int aircraftId) {
+    public void systemAddFlight(int flightId, String status, int aircraftId, Integer runwayId, Integer gateId) {
         try {
             flightDAO.addFlight(
                     flightId,
                     status,
                     aircraftId,
-                    null,
-                    null
+                    runwayId,
+                    gateId
             );
             System.out.println("Flight " + flightId + " added by system.");
             assignmentEngine.dispatchFlight(flightId);

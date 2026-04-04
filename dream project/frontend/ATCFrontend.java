@@ -66,22 +66,38 @@ public class ATCFrontend extends JFrame {
 
     private void findServerPort() {
         int foundPort = -1;
+        int maxRetries = 3;
 
         for (int port = 8080; port < 8090; port++) {
             System.out.println("Trying backend on port " + port + "...");
-            try {
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:" + port + "/test"))
-                    .GET()
-                    .build();
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                System.out.println("Received status " + response.statusCode() + " from /test on port " + port);
-                if (response.statusCode() == 200) {
-                    foundPort = port;
-                    break;
+
+            // Try multiple times for each port
+            for (int retry = 0; retry < maxRetries; retry++) {
+                try {
+                    HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/test"))
+                        .GET()
+                        .build();
+                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                    System.out.println("Received status " + response.statusCode() + " from /test on port " + port);
+                    if (response.statusCode() == 200) {
+                        foundPort = port;
+                        break;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Port " + port + " not available (attempt " + (retry + 1) + "/" + maxRetries + "): " + e.getMessage());
+                    if (retry < maxRetries - 1) {
+                        try {
+                            Thread.sleep(1000); // Wait 1 second between retries
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                System.out.println("Port " + port + " not available: " + e.getMessage());
+            }
+
+            if (foundPort >= 0) {
+                break;
             }
         }
 

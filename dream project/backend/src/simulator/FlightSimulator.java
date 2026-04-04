@@ -62,7 +62,7 @@ public class FlightSimulator {
                 }
                 
                 System.out.println("--- [SIMULATOR] New " + status.toString().toLowerCase() + " flight detected on radar: " + newFlightId + " ---");
-                atcService.systemAddFlight(newFlightId, status.name(), randomAircraftId);
+                atcService.systemAddFlight(newFlightId, status.name(), randomAircraftId, null, null);
                 
                 // If emergency, declare it
                 if (status == FlightStatus.EMERGENCY) {
