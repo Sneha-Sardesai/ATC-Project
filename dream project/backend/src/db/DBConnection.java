@@ -12,7 +12,7 @@ public class DBConnection {
             + "&serverTimezone=UTC";
 
     private static final String USER = "root";
-    private static final String PASSWORD = "OpenEveryDoor2386*";
+    private static final String PASSWORD = "root123";
 
     public static Connection getConnection() {
         try {

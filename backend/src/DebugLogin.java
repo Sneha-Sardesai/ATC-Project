@@ -4,7 +4,7 @@ public class DebugLogin {
     public static void main(String[] args) {
         String url = "jdbc:mysql://localhost:3306/ATC_DB";
         String user = "root";
-        String password = "Yunijoseph@05";
+        String password = "roo123";
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");

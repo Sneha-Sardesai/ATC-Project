@@ -9,7 +9,7 @@ public class JDBCTest {
 
         String url = "jdbc:mysql://localhost:3306/ATC_DB";
         String user = "root";
-        String password = "Yunijoseph@05";  // your mysql password
+        String password = "root123";  // your mysql password
 
         try {
 

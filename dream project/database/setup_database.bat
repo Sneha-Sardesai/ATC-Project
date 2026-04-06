@@ -12,31 +12,31 @@ if not exist %MYSQL_PATH% (
     exit /b 1
 )
 
-%MYSQL_PATH% -u root -pOpenEveryDoor2386* < schema.sql
+%MYSQL_PATH% -u root -proot123 < schema.sql
 if %errorlevel% neq 0 (
     echo Failed to run schema.sql
     exit /b %errorlevel%
 )
 
-%MYSQL_PATH% -u root -pOpenEveryDoor2386* < enums.sql
+%MYSQL_PATH% -u root -proot123 < enums.sql
 if %errorlevel% neq 0 (
     echo Failed to run enums.sql
     exit /b %errorlevel%
 )
 
-%MYSQL_PATH% -u root -pOpenEveryDoor2386* < procedures.sql
+%MYSQL_PATH% -u root -proot123 < procedures.sql
 if %errorlevel% neq 0 (
     echo Failed to run procedures.sql
     exit /b %errorlevel%
 )
 
-%MYSQL_PATH% -u root -pOpenEveryDoor2386* < triggers.sql
+%MYSQL_PATH% -u root -proot123 < triggers.sql
 if %errorlevel% neq 0 (
     echo Failed to run triggers.sql
     exit /b %errorlevel%
 )
 
-%MYSQL_PATH% -u root -pOpenEveryDoor2386* < seed.sql
+%MYSQL_PATH% -u root -proot123 < seed.sql
 if %errorlevel% neq 0 (
     echo Failed to run seed.sql
     exit /b %errorlevel%
