@@ -77,6 +77,22 @@ public class FlightDAO {
     }
 
     // =========================
+    // ASSIGN GATE - DIRECT UPDATE
+    // =========================
+    public void assignGateDirect(int flightId, int gateId) throws SQLException {
+        String sql = "UPDATE flights SET gate_id = ?, status = 'GATE_ASSIGNED' WHERE flight_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, gateId);
+            ps.setInt(2, flightId);
+            int rowsUpdated = ps.executeUpdate();
+            System.out.println("Gate assignment: " + rowsUpdated + " rows updated for flight " + flightId);
+        }
+    }
+
+    // =========================
     // UPDATE FLIGHT STATUS
     // =========================
     public void updateFlightStatus(int flightId, String status) throws SQLException {

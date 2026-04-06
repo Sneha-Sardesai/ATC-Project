@@ -108,8 +108,11 @@ public class ATCService {
     // Controller assigns gate
     public void assignGate(int flightId, int gateId) {
         try {
-            flightDAO.assignGate(flightId, gateId);
+            // Use direct UPDATE to ensure database is always updated
+            flightDAO.assignGateDirect(flightId, gateId);
+            System.out.println("Gate " + gateId + " assigned to flight " + flightId);
         } catch (SQLException e) {
+            System.err.println("Error assigning gate: " + e.getMessage());
             e.printStackTrace();
         }
     }

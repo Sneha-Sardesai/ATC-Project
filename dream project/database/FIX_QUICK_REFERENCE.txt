@@ -1,0 +1,111 @@
+# Quick Runway Assignment Fix Reference
+
+## What Was Wrong?
+
+You were getting this error when trying to assign a runway:
+```
+java.sql.SQLException: Gate can only be assigned after landing or during emergency
+```
+
+But you were assigning a RUNWAY, not a GATE!
+
+## Why Did This Happen?
+
+The database trigger `trg_gate_only_after_landing` was checking gate constraints **on every update** to the flights table, even when you were only updating runway_id.
+
+### Before (Broken Logic):
+```
+When ANY column in flights table is updated:
+  IF the gate_id field is not empty
+    AND flight status is NOT 'LANDED' or 'EMERGENCY':
+      THROW ERROR
+```
+
+This meant: Even when updating runway_id, the trigger would check if gate_id was set. If it was set from a previous operation, it would fail.
+
+### After (Fixed Logic):
+```
+When ANY column in flights table is updated:
+  IF gate_id is NOT NULL
+    AND gate_id is being CHANGED (not just staying the same)
+    AND flight status is NOT 'LANDED' or 'EMERGENCY':
+      THROW ERROR
+```
+
+Now the trigger only validates when gate_id is actually changing.
+
+## The Fix
+
+**File**: `database/triggers.sql`
+
+**Change**: Added condition to check if gate_id is actually being changed:
+```sql
+AND (OLD.gate_id IS NULL OR NEW.gate_id != OLD.gate_id)
+```
+
+This way:
+- ✓ Updating runway_id works fine
+- ✓ Updating gate_id still validates the constraint
+- ✓ Error only throws when it should
+
+## How to Apply
+
+### Option 1: Automatic (Recommended)
+```bash
+cd database
+apply_fixes.bat
+```
+
+### Option 2: Manual
+```bash
+mysql -u root -p ATC_DB < apply_fixes.sql
+```
+
+### Option 3: MySQL Workbench
+1. Open MySQL Workbench
+2. Connect to ATC_DB
+3. Open file: `database/apply_fixes.sql`
+4. Click Execute (Lightning icon) or Ctrl+Enter
+
+## After Applying Fixes
+
+1. **Restart your backend server**
+   ```bash
+   cd backend
+   java -cp bin:lib/* api.SimpleServer
+   ```
+
+2. **Test it**:
+   - Login to frontend
+   - View flight details
+   - Click "Assign Runway"
+   - Enter runway number
+   - Should work without error! ✓
+   - Click "Refresh" to verify it's saved in database
+
+## What Gets Updated?
+
+| File | What Changed |
+|------|--------------|
+| `database/triggers.sql` | Fixed gate assignment trigger condition |
+| `database/fix_procedures.sql` | Added explicit UPDATE procedures |
+| `database/apply_fixes.sql` | NEW script to apply all fixes |
+| `database/apply_fixes.bat` | NEW batch file to run fixes automatically |
+
+## Why This Matters
+
+- **Before**: Runway assignment would fail with confusing error
+- **After**: Runway assignment works, values persist in database, refresh shows updated values
+
+## Verification Query
+
+After applying, check if it worked:
+```sql
+SELECT flight_id, runway_id FROM flights WHERE runway_id IS NOT NULL;
+```
+
+You should see your assigned runways listed!
+
+---
+
+**Questions?** Check `RUNWAY_FIX_GUIDE.md` for detailed instructions.

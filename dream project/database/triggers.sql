@@ -8,10 +8,8 @@ CREATE TRIGGER trg_gate_only_after_landing
 BEFORE UPDATE ON flights
 FOR EACH ROW
 BEGIN
-    IF NEW.gate_id IS NOT NULL AND OLD.status NOT IN ('LANDED', 'EMERGENCY') THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Gate can only be assigned after landing or during emergency';
-    END IF;
+    -- Allow gate assignment for any status - removed restriction to match runway assignment behavior
+    -- Gate can be assigned at any time, similar to runway
 END//
 DELIMITER ;
 

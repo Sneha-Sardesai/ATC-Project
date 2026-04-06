@@ -1,10 +1,14 @@
 import java.awt.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 class Flight {
     int id;
@@ -165,7 +169,10 @@ public class ATCSystemGUI {
             showFlightDetails(flightId);
         });
 
-        refresh.addActionListener(e -> deleteAllFlights());
+        refresh.addActionListener(e -> {
+            refreshTable();
+            log("Flight table refreshed to show latest data.");
+        });
 
         runway.addActionListener(e -> {
             try {
@@ -265,6 +272,10 @@ public class ATCSystemGUI {
     }
 
     static void showFlightDetails(int flightId) {
+        showFlightDetailsDialog(flightId);
+    }
+
+    static void showFlightDetailsDialog(int flightId) {
         try {
             URL url = new URL("http://localhost:8080/flights/" + flightId);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -285,39 +296,107 @@ public class ATCSystemGUI {
                 log("Viewing details for flight " + flightId);
 
                 JDialog dialog = new JDialog(frame, "Flight Details - " + flightId, true);
-                dialog.setSize(380, 260);
+                dialog.setSize(550, 340);
                 dialog.setLocationRelativeTo(frame);
 
-                JPanel panel = new JPanel(new GridBagLayout());
-                panel.setBackground(new Color(18,18,25));
+                // Main panel with details
+                JPanel mainPanel = new JPanel(new BorderLayout());
+                mainPanel.setBackground(new Color(18,18,25));
+
+                // Details section
+                JPanel detailsPanel = new JPanel(new GridBagLayout());
+                detailsPanel.setBackground(new Color(18,18,25));
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.insets = new Insets(8, 8, 8, 8);
                 gbc.anchor = GridBagConstraints.WEST;
 
                 int row = 0;
+                Map<String, JLabel> detailLabels = new HashMap<>();
                 for (String key : new String[]{"flightId", "status", "aircraftId", "runwayId", "gateId"}) {
                     gbc.gridx = 0;
                     gbc.gridy = row;
                     JLabel keyLabel = label(key);
-                    panel.add(keyLabel, gbc);
+                    detailsPanel.add(keyLabel, gbc);
                     gbc.gridx = 1;
                     String value = details.getOrDefault(key, "N/A");
                     JLabel valueLabel = new JLabel(value);
                     valueLabel.setForeground(Color.WHITE);
-                    panel.add(valueLabel, gbc);
+                    detailsPanel.add(valueLabel, gbc);
+                    detailLabels.put(key, valueLabel);
                     row++;
                 }
+
+                mainPanel.add(detailsPanel, BorderLayout.CENTER);
+
+                // Button panel
+                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+                buttonPanel.setBackground(new Color(18,18,25));
+
+                JButton assignRunwayBtn = new JButton("Assign Runway");
+                styleButton(assignRunwayBtn);
+                assignRunwayBtn.addActionListener(e -> {
+                    try {
+                        String runwayStr = JOptionPane.showInputDialog(dialog, "Enter Runway ID:");
+                        if (runwayStr != null && !runwayStr.isEmpty()) {
+                            int runwayId = Integer.parseInt(runwayStr);
+                            if (assignRunwayViaAPI(flightId, runwayId)) {
+                                JOptionPane.showMessageDialog(dialog, "Runway assigned successfully!");
+                                // Update the details in the dialog
+                                detailLabels.get("runwayId").setText(String.valueOf(runwayId));
+                                log("Assigned runway " + runwayId + " to flight " + flightId);
+                                // Refresh the main table
+                                refreshTable();
+                            } else {
+                                JOptionPane.showMessageDialog(dialog, "Failed to assign runway.");
+                            }
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(dialog, "Please enter a valid runway ID.");
+                    }
+                });
+
+                JButton assignGateBtn = new JButton("Assign Gate");
+                styleButton(assignGateBtn);
+                assignGateBtn.addActionListener(e -> {
+                    try {
+                        String gateStr = JOptionPane.showInputDialog(dialog, "Enter Gate ID:");
+                        if (gateStr != null && !gateStr.isEmpty()) {
+                            int gateId = Integer.parseInt(gateStr);
+                            if (assignGateViaAPI(flightId, gateId)) {
+                                JOptionPane.showMessageDialog(dialog, "Gate assigned successfully!");
+                                // Update the details in the dialog
+                                detailLabels.get("gateId").setText(String.valueOf(gateId));
+                                log("Assigned gate " + gateId + " to flight " + flightId);
+                                // Refresh the main table
+                                refreshTable();
+                            } else {
+                                JOptionPane.showMessageDialog(dialog, "Failed to assign gate.");
+                            }
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(dialog, "Please enter a valid gate ID.");
+                    }
+                });
+
+                JButton refreshBtn = new JButton("Refresh");
+                styleButton(refreshBtn);
+                refreshBtn.addActionListener(e -> {
+                    dialog.dispose();
+                    showFlightDetailsDialog(flightId);
+                });
 
                 JButton close = new JButton("Close");
                 styleButton(close);
                 close.addActionListener(e -> dialog.dispose());
-                gbc.gridx = 0;
-                gbc.gridy = row;
-                gbc.gridwidth = 2;
-                gbc.anchor = GridBagConstraints.CENTER;
-                panel.add(close, gbc);
 
-                dialog.add(panel);
+                buttonPanel.add(assignRunwayBtn);
+                buttonPanel.add(assignGateBtn);
+                buttonPanel.add(refreshBtn);
+                buttonPanel.add(close);
+
+                mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+                dialog.add(mainPanel);
                 dialog.setVisible(true);
             } else if (responseCode == 401) {
                 JOptionPane.showMessageDialog(frame, "Unauthorized. Please login again.");
@@ -329,6 +408,58 @@ public class ATCSystemGUI {
             conn.disconnect();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "Error fetching details: " + ex.getMessage());
+        }
+    }
+
+    static boolean assignRunwayViaAPI(int flightId, int runwayId) {
+        try {
+            URL url = new URL("http://localhost:8080/flights/runway");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            // Create JSON body
+            String jsonBody = "{\"flightId\":" + flightId + ",\"runwayId\":" + runwayId + "}";
+
+            conn.setDoOutput(true);
+            OutputStream os = conn.getOutputStream();
+            os.write(jsonBody.getBytes());
+            os.flush();
+            os.close();
+
+            int responseCode = conn.getResponseCode();
+            conn.disconnect();
+            return responseCode == 200;
+        } catch (Exception ex) {
+            log("Error assigning runway: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    static boolean assignGateViaAPI(int flightId, int gateId) {
+        try {
+            URL url = new URL("http://localhost:8080/flights/gate");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            // Create JSON body
+            String jsonBody = "{\"flightId\":" + flightId + ",\"gateId\":" + gateId + "}";
+
+            conn.setDoOutput(true);
+            OutputStream os = conn.getOutputStream();
+            os.write(jsonBody.getBytes());
+            os.flush();
+            os.close();
+
+            int responseCode = conn.getResponseCode();
+            conn.disconnect();
+            return responseCode == 200;
+        } catch (Exception ex) {
+            log("Error assigning gate: " + ex.getMessage());
+            return false;
         }
     }
 
