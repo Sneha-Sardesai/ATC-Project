@@ -117,6 +117,17 @@ public class ATCService {
         }
     }
 
+    // Polymorphic method to perform flight actions
+    public void performAction(FlightAction action, Flight flight) {
+        try {
+            action.execute(flight);
+            System.out.println("Action executed successfully on flight " + flight.getId());
+        } catch (Exception e) {
+            System.err.println("Error performing action: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     // Controller updates flight status
     public void updateFlightStatus(int flightId, FlightStatus status) {
         try {

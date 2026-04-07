@@ -1,6 +1,6 @@
 package model;
 
-public class Flight {
+public class Flight implements Persistable {
 
     private int flightId;
     private FlightStatus status;
@@ -22,4 +22,17 @@ public class Flight {
     public int getAircraftId() { return aircraftId; }
     public int getRunwayId() { return runwayId; }
     public int getGateId() { return gateId; }
+
+    public void setFlightId(int flightId) { this.flightId = flightId; }
+    public void setStatus(FlightStatus status) { this.status = status; }
+    public void setAircraftId(int aircraftId) { this.aircraftId = aircraftId; }
+    public void setRunwayId(int runwayId) { this.runwayId = runwayId; }
+    public void setGateId(int gateId) { this.gateId = gateId; }
+
+    // Persistable interface implementation
+    @Override
+    public int getId() { return flightId; }
+
+    @Override
+    public void setId(int id) { this.flightId = id; }
 }

@@ -1,6 +1,6 @@
 package model;
 
-public class Controller {
+public class Controller implements Persistable {
     private int controllerId;
     private String name;
 
@@ -16,4 +16,11 @@ public class Controller {
     public String getName() {
         return name;
     }
+
+    // Persistable interface implementation
+    @Override
+    public int getId() { return controllerId; }
+
+    @Override
+    public void setId(int id) { this.controllerId = id; }
 }
