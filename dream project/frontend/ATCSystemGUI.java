@@ -1,7 +1,9 @@
 import java.awt.*;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,8 +32,13 @@ public class ATCSystemGUI {
     static DefaultTableModel model;
     static JTextArea logArea;
     static int sessionId = -1;
+    static HttpClient httpClient;
+    static final String API_BASE = "http://localhost:8080";
 
     public static void main(String[] args) {
+
+        // Initialize HTTP client
+        httpClient = HttpClient.newHttpClient();
 
         // Sample Data
         flights.add(new Flight(101, "Approaching"));
@@ -120,6 +127,7 @@ public class ATCSystemGUI {
         JButton runway = new JButton("Assign Runway");
         JButton gate = new JButton("Assign Gate");
         JButton status = new JButton("Update Status");
+        JButton emergency = new JButton("Declare Emergency");
         JButton refresh = new JButton("Refresh");
 
         styleButton(view);
@@ -127,6 +135,7 @@ public class ATCSystemGUI {
         styleButton(runway);
         styleButton(gate);
         styleButton(status);
+        styleButton(emergency);
         styleButton(refresh);
 
         btnPanel.add(view);
@@ -134,6 +143,7 @@ public class ATCSystemGUI {
         btnPanel.add(runway);
         btnPanel.add(gate);
         btnPanel.add(status);
+        btnPanel.add(emergency);
         btnPanel.add(refresh);
 
         main.add(btnPanel, BorderLayout.SOUTH);
@@ -204,8 +214,16 @@ public class ATCSystemGUI {
             }
         });
 
-        frame.setContentPane(content);
-        frame.revalidate();
+        emergency.addActionListener(e -> {
+            try {
+                int id = Integer.parseInt(JOptionPane.showInputDialog("Enter Flight ID"));
+                String type = JOptionPane.showInputDialog("Enter Emergency Type (e.g., MEDICAL, ENGINE_FAILURE)");
+                int priority = Integer.parseInt(JOptionPane.showInputDialog("Enter Priority (1-5)"));
+                declareEmergency(id, type, priority);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid Input");
+            }
+        });
     }
 
     // ---- STYLE ----
@@ -247,24 +265,22 @@ public class ATCSystemGUI {
         }
 
         try {
-            URL url = new URL("http://localhost:8080/flights");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
-            conn.setRequestProperty("Accept", "application/json");
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights"))
+                .header("Accept", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .GET()
+                .build();
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                String response = readResponse(conn.getInputStream());
-                List<Flight> serverFlights = parseFlightArray(response);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                List<Flight> serverFlights = parseFlightArray(response.body());
                 flights.clear();
                 flights.addAll(serverFlights);
-                conn.disconnect();
                 return true;
             } else {
-                log("Failed to load flights from server. Response code: " + responseCode);
+                log("Failed to load flights from server. Response code: " + response.statusCode());
             }
-            conn.disconnect();
         } catch (Exception ex) {
             log("Error loading flights: " + ex.getMessage());
         }
@@ -277,17 +293,16 @@ public class ATCSystemGUI {
 
     static void showFlightDetailsDialog(int flightId) {
         try {
-            URL url = new URL("http://localhost:8080/flights/" + flightId);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
-            conn.setRequestProperty("Accept", "application/json");
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/" + flightId))
+                .header("Accept", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .GET()
+                .build();
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                String response = readResponse(conn.getInputStream());
-                conn.disconnect();
-                Map<String, String> details = parseJsonObject(response);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                Map<String, String> details = parseJsonObject(response.body());
                 if (details.isEmpty()) {
                     JOptionPane.showMessageDialog(frame, "Unable to parse flight details.");
                     return;
@@ -398,14 +413,13 @@ public class ATCSystemGUI {
 
                 dialog.add(mainPanel);
                 dialog.setVisible(true);
-            } else if (responseCode == 401) {
+            } else if (response.statusCode() == 401) {
                 JOptionPane.showMessageDialog(frame, "Unauthorized. Please login again.");
-            } else if (responseCode == 404) {
+            } else if (response.statusCode() == 404) {
                 JOptionPane.showMessageDialog(frame, "Flight not found.");
             } else {
-                JOptionPane.showMessageDialog(frame, "Server error: " + responseCode);
+                JOptionPane.showMessageDialog(frame, "Server error: " + response.statusCode());
             }
-            conn.disconnect();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "Error fetching details: " + ex.getMessage());
         }
@@ -413,24 +427,17 @@ public class ATCSystemGUI {
 
     static boolean assignRunwayViaAPI(int flightId, int runwayId) {
         try {
-            URL url = new URL("http://localhost:8080/flights/runway");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
-            conn.setRequestProperty("Content-Type", "application/json");
+            String json = String.format("{\"flightId\":%d,\"runwayId\":%d}", flightId, runwayId);
 
-            // Create JSON body
-            String jsonBody = "{\"flightId\":" + flightId + ",\"runwayId\":" + runwayId + "}";
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/runway"))
+                .header("Content-Type", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
 
-            conn.setDoOutput(true);
-            OutputStream os = conn.getOutputStream();
-            os.write(jsonBody.getBytes());
-            os.flush();
-            os.close();
-
-            int responseCode = conn.getResponseCode();
-            conn.disconnect();
-            return responseCode == 200;
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
         } catch (Exception ex) {
             log("Error assigning runway: " + ex.getMessage());
             return false;
@@ -439,24 +446,17 @@ public class ATCSystemGUI {
 
     static boolean assignGateViaAPI(int flightId, int gateId) {
         try {
-            URL url = new URL("http://localhost:8080/flights/gate");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
-            conn.setRequestProperty("Content-Type", "application/json");
+            String json = String.format("{\"flightId\":%d,\"gateId\":%d}", flightId, gateId);
 
-            // Create JSON body
-            String jsonBody = "{\"flightId\":" + flightId + ",\"gateId\":" + gateId + "}";
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/gate"))
+                .header("Content-Type", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
 
-            conn.setDoOutput(true);
-            OutputStream os = conn.getOutputStream();
-            os.write(jsonBody.getBytes());
-            os.flush();
-            os.close();
-
-            int responseCode = conn.getResponseCode();
-            conn.disconnect();
-            return responseCode == 200;
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
         } catch (Exception ex) {
             log("Error assigning gate: " + ex.getMessage());
             return false;
@@ -602,36 +602,89 @@ public class ATCSystemGUI {
     }
 
     static void updateStatus(int id, String st) {
-        for (Flight f : flights) {
-            if (f.id == id) {
-                f.status = st;
+        try {
+            String json = String.format("{\"flightId\":%d,\"status\":\"%s\"}", id, st);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/status"))
+                .header("Content-Type", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                // Update local list and refresh table
+                for (Flight f : flights) {
+                    if (f.id == id) {
+                        f.status = st;
+                        break;
+                    }
+                }
                 refreshTable();
                 JOptionPane.showMessageDialog(frame, "Status Updated Successfully");
-                return;
+                log("Updated status of flight " + id + " to " + st);
+            } else if (response.statusCode() == 401) {
+                JOptionPane.showMessageDialog(frame, "Unauthorized. Please login again.");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Failed to update status. Server error: " + response.statusCode());
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "Error updating status: " + ex.getMessage());
         }
-        JOptionPane.showMessageDialog(frame, "Flight Not Found");
+    }
+
+    static void declareEmergency(int id, String type, int priority) {
+        try {
+            String json = String.format("{\"flightId\":%d,\"type\":\"%s\",\"priority\":%d}", id, type, priority);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/emergency"))
+                .header("Content-Type", "application/json")
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                // Update local list status to EMERGENCY and refresh table
+                for (Flight f : flights) {
+                    if (f.id == id) {
+                        f.status = "EMERGENCY";
+                        break;
+                    }
+                }
+                refreshTable();
+                JOptionPane.showMessageDialog(frame, "Emergency Declared Successfully");
+                log("Declared emergency for flight " + id + " with type " + type + " and priority " + priority);
+            } else if (response.statusCode() == 401) {
+                JOptionPane.showMessageDialog(frame, "Unauthorized. Please login again.");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Failed to declare emergency. Server error: " + response.statusCode());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "Error declaring emergency: " + ex.getMessage());
+        }
     }
 
     static void deleteAllFlights() {
         try {
-            URL url = new URL("http://localhost:8080/flights/deleteAll");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("DELETE");
-            conn.setRequestProperty("X-Session-Id", String.valueOf(sessionId));
-            conn.setRequestProperty("Content-Type", "application/json");
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE + "/flights/deleteAll"))
+                .header("X-Session-Id", String.valueOf(sessionId))
+                .DELETE()
+                .build();
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
                 flights.clear();
                 model.setRowCount(0);
                 JOptionPane.showMessageDialog(frame, "All flights deleted successfully!");
-            } else if (responseCode == 401) {
+            } else if (response.statusCode() == 401) {
                 JOptionPane.showMessageDialog(frame, "Unauthorized. Please login again.");
             } else {
-                JOptionPane.showMessageDialog(frame, "Failed to delete flights. Server error: " + responseCode);
+                JOptionPane.showMessageDialog(frame, "Failed to delete flights. Server error: " + response.statusCode());
             }
-            conn.disconnect();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage());
         }

@@ -134,7 +134,8 @@ public class ATCSystem {
             System.out.println("2. Assign Runway");
             System.out.println("3. Assign Gate");
             System.out.println("4. Update Flight Status");
-            System.out.println("5. Exit");
+            System.out.println("5. Declare Emergency");
+            System.out.println("6. Exit");
 
             int choice = sc.nextInt();
 
@@ -143,7 +144,8 @@ public class ATCSystem {
                 case 2: assignRunway(); break;
                 case 3: assignGate(); break;
                 case 4: updateStatus(); break;
-                case 5: return;
+                case 5: declareEmergency(); break;
+                case 6: return;
             }
         }
     }
@@ -209,6 +211,25 @@ public class ATCSystem {
 
         f.status = status;
         System.out.println("Status Updated!");
+    }
+
+    // ---- Declare Emergency ----
+    static void declareEmergency() {
+        System.out.print("Enter Flight ID: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        Flight f = getFlight(id);
+        if (f == null) return;
+
+        System.out.print("Enter Emergency Type: ");
+        String type = sc.nextLine();
+
+        System.out.print("Enter Priority (1-5): ");
+        int priority = sc.nextInt();
+
+        f.status = "EMERGENCY";
+        System.out.println("Emergency Declared for flight " + id + " with type " + type + " and priority " + priority);
     }
 
     // ---- Helper ----
