@@ -6,5 +6,6 @@ public enum FlightStatus {
     LANDED,
     TAXIING,
     GATE_ASSIGNED,
-    EMERGENCY
+    EMERGENCY,
+    COMPLETED
 }

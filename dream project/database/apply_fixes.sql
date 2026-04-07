@@ -1,6 +1,19 @@
 USE ATC_DB;
 
 -- =========================
+-- ADD COMPLETED STATUS TO FLIGHTS TABLE
+-- =========================
+ALTER TABLE flights MODIFY status ENUM(
+    'APPROACHING',
+    'HOLDING',
+    'LANDED',
+    'TAXIING',
+    'GATE_ASSIGNED',
+    'EMERGENCY',
+    'COMPLETED'
+) NOT NULL;
+
+-- =========================
 -- DROP AND RECREATE TRIGGER FIX
 -- =========================
 DROP TRIGGER IF EXISTS trg_gate_only_after_landing;
@@ -43,6 +56,27 @@ BEGIN
     SET gate_id = p_gate_id,
         status = 'GATE_ASSIGNED'
     WHERE flight_id = p_flight_id;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS UpdateFlightStatus;
+
+DELIMITER //
+CREATE PROCEDURE UpdateFlightStatus(
+    IN p_flight_id INT,
+    IN p_status VARCHAR(20)
+)
+BEGIN
+    IF p_status = 'COMPLETED' THEN
+        -- Delete related records first due to foreign key constraints
+        DELETE FROM emergencies WHERE flight_id = p_flight_id;
+        DELETE FROM assignments WHERE flight_id = p_flight_id;
+        DELETE FROM flights WHERE flight_id = p_flight_id;
+    ELSE
+        UPDATE flights
+        SET status = p_status
+        WHERE flight_id = p_flight_id;
+    END IF;
 END//
 DELIMITER ;
 
